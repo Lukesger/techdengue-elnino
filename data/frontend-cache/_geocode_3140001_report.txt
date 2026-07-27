@@ -1,0 +1,18 @@
+=== 1) consorcios_lista_MG.json — geocode 3140001 ===
+consorcio_id: 19
+consorcio_nome: ICISMEP - ZURS BHTE
+municipio: Mariana
+tipo/modalidade: undefined | verba_direta field: undefined
+municipio geocode fields: {"geocode":3140001,"nome":"Mariana"}
+---
+
+=== Consórcios com Mariana (nome) ou verba direta ===
+id=19 contrato_id=undefined nome="ICISMEP - ZURS BHTE" verba_direta=false n_mun=22
+
+=== 2) pipeline_v2_cache_*.json — dados.df_mensal_mun geocode 3140001 ===
+Caches analisados: 31
+Caches com linhas 3140001: 0
+Total linhas (soma por cache): 0
+
+=== 3) pipeline_v2_cache Mariana / verba direta ===
+contrato_id 19: arquivo pipeline_v2_cache_19.json => EXISTE rotulo="ICISMEP - ZURS BHTE" rows_3140001=0

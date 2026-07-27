@@ -1,0 +1,3039 @@
+{
+  "uf": "MG",
+  "atualizado_em": 1783620572337,
+  "consorcios": [
+    {
+      "id": 40,
+      "nome": "AMVAP - ZURS ITUIUTABA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 8,
+      "municipios": [
+        {
+          "geocode": 3109808,
+          "nome": "Cachoeira Dourada"
+        },
+        {
+          "geocode": 3111101,
+          "nome": "Campina Verde"
+        },
+        {
+          "geocode": 3111804,
+          "nome": "Canápolis"
+        },
+        {
+          "geocode": 3112604,
+          "nome": "Capinópolis"
+        },
+        {
+          "geocode": 3115805,
+          "nome": "Centralina"
+        },
+        {
+          "geocode": 3129103,
+          "nome": "Gurinhatã"
+        },
+        {
+          "geocode": 3131406,
+          "nome": "Ipiaçu"
+        },
+        {
+          "geocode": 3159803,
+          "nome": "Santa Vitória"
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "nome": "AMVAP - ZURS UBERLANDIA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 16,
+      "municipios": [
+        {
+          "geocode": 3100104,
+          "nome": "Abadia dos Dourados"
+        },
+        {
+          "geocode": 3103751,
+          "nome": "Araporã"
+        },
+        {
+          "geocode": 3115003,
+          "nome": "Cascalho Rico"
+        },
+        {
+          "geocode": 3119302,
+          "nome": "Coromandel"
+        },
+        {
+          "geocode": 3123502,
+          "nome": "Douradoquara"
+        },
+        {
+          "geocode": 3124807,
+          "nome": "Estrela do Sul"
+        },
+        {
+          "geocode": 3127909,
+          "nome": "Grupiara"
+        },
+        {
+          "geocode": 3130705,
+          "nome": "Indianópolis"
+        },
+        {
+          "geocode": 3131604,
+          "nome": "Iraí de Minas"
+        },
+        {
+          "geocode": 3142809,
+          "nome": "Monte Alegre de Minas"
+        },
+        {
+          "geocode": 3143104,
+          "nome": "Monte Carmelo"
+        },
+        {
+          "geocode": 3145000,
+          "nome": "Nova Ponte"
+        },
+        {
+          "geocode": 3148103,
+          "nome": "Patrocínio"
+        },
+        {
+          "geocode": 3152808,
+          "nome": "Prata"
+        },
+        {
+          "geocode": 3156403,
+          "nome": "Romaria"
+        },
+        {
+          "geocode": 3169604,
+          "nome": "Tupaciguara"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "nome": "ARAGUARI",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3103504,
+        "nome": "Araguari"
+      }
+    },
+    {
+      "id": 28,
+      "nome": "ARAXÁ",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3104007,
+        "nome": "Araxá"
+      }
+    },
+    {
+      "id": 44,
+      "nome": "BETIM",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3106705,
+        "nome": "Betim"
+      }
+    },
+    {
+      "id": 45,
+      "nome": "BOM DESPACHO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3107406,
+        "nome": "Bom Despacho"
+      }
+    },
+    {
+      "id": 76,
+      "nome": "BONFINÓPOLIS DE MINAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3108206,
+        "nome": "Bonfinópolis de Minas"
+      }
+    },
+    {
+      "id": 46,
+      "nome": "BRUMADINHO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3109006,
+        "nome": "Brumadinho"
+      }
+    },
+    {
+      "id": 97,
+      "nome": "CACOAL - RO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 1100049,
+        "nome": "Cacoal"
+      }
+    },
+    {
+      "id": 47,
+      "nome": "CAMPO BELO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3111200,
+        "nome": "Campo Belo"
+      }
+    },
+    {
+      "id": 48,
+      "nome": "CARATINGA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3113404,
+        "nome": "Caratinga"
+      }
+    },
+    {
+      "id": 2,
+      "nome": "CIMMESF - ZURS PIRAPORA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 7,
+      "municipios": [
+        {
+          "geocode": 3109402,
+          "nome": "Buritizeiro"
+        },
+        {
+          "geocode": 3129608,
+          "nome": "Ibiaí"
+        },
+        {
+          "geocode": 3138104,
+          "nome": "Lassance"
+        },
+        {
+          "geocode": 3151206,
+          "nome": "Pirapora"
+        },
+        {
+          "geocode": 3152131,
+          "nome": "Ponto Chique"
+        },
+        {
+          "geocode": 3157609,
+          "nome": "Santa Fé de Minas"
+        },
+        {
+          "geocode": 3170800,
+          "nome": "Várzea da Palma"
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "nome": "CINSC - ZURS PASSOS",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 25,
+      "municipios": [
+        {
+          "geocode": 3101904,
+          "nome": "Alpinópolis"
+        },
+        {
+          "geocode": 3107604,
+          "nome": "Bom Jesus da Penha"
+        },
+        {
+          "geocode": 3112406,
+          "nome": "Capetinga"
+        },
+        {
+          "geocode": 3112802,
+          "nome": "Capitólio"
+        },
+        {
+          "geocode": 3114402,
+          "nome": "Carmo do Rio Claro"
+        },
+        {
+          "geocode": 3115102,
+          "nome": "Cássia"
+        },
+        {
+          "geocode": 3116407,
+          "nome": "Claraval"
+        },
+        {
+          "geocode": 3121209,
+          "nome": "Delfinópolis"
+        },
+        {
+          "geocode": 3123403,
+          "nome": "Doresópolis"
+        },
+        {
+          "geocode": 3126307,
+          "nome": "Fortaleza de Minas"
+        },
+        {
+          "geocode": 3128105,
+          "nome": "Guapé"
+        },
+        {
+          "geocode": 3129707,
+          "nome": "Ibiraci"
+        },
+        {
+          "geocode": 3132909,
+          "nome": "Itamogi"
+        },
+        {
+          "geocode": 3133758,
+          "nome": "Itaú de Minas"
+        },
+        {
+          "geocode": 3134806,
+          "nome": "Jacuí"
+        },
+        {
+          "geocode": 3143203,
+          "nome": "Monte Santo de Minas"
+        },
+        {
+          "geocode": 3145109,
+          "nome": "Nova Resende"
+        },
+        {
+          "geocode": 3150505,
+          "nome": "Pimenta"
+        },
+        {
+          "geocode": 3151503,
+          "nome": "Piumhi"
+        },
+        {
+          "geocode": 3152907,
+          "nome": "Pratápolis"
+        },
+        {
+          "geocode": 3162203,
+          "nome": "São João Batista do Glória"
+        },
+        {
+          "geocode": 3162948,
+          "nome": "São José da Barra"
+        },
+        {
+          "geocode": 3164308,
+          "nome": "São Roque de Minas"
+        },
+        {
+          "geocode": 3165107,
+          "nome": "São Tomás de Aquino"
+        },
+        {
+          "geocode": 3170602,
+          "nome": "Vargem Bonita"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "nome": "CISAJE - ZURS DIAMANTINA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 31,
+      "municipios": [
+        {
+          "geocode": 3102407,
+          "nome": "Alvorada de Minas"
+        },
+        {
+          "geocode": 3103405,
+          "nome": "Araçuaí"
+        },
+        {
+          "geocode": 3104452,
+          "nome": "Aricanduva"
+        },
+        {
+          "geocode": 3106507,
+          "nome": "Berilo"
+        },
+        {
+          "geocode": 3112307,
+          "nome": "Capelinha"
+        },
+        {
+          "geocode": 3113503,
+          "nome": "Carbonita"
+        },
+        {
+          "geocode": 3116100,
+          "nome": "Chapada do Norte"
+        },
+        {
+          "geocode": 3116803,
+          "nome": "Coluna"
+        },
+        {
+          "geocode": 3117504,
+          "nome": "Conceição do Mato Dentro"
+        },
+        {
+          "geocode": 3118106,
+          "nome": "Congonhas do Norte"
+        },
+        {
+          "geocode": 3119500,
+          "nome": "Coronel Murta"
+        },
+        {
+          "geocode": 3120102,
+          "nome": "Couto de Magalhães de Minas"
+        },
+        {
+          "geocode": 3121001,
+          "nome": "Datas"
+        },
+        {
+          "geocode": 3121605,
+          "nome": "Diamantina"
+        },
+        {
+          "geocode": 3125408,
+          "nome": "Felício dos Santos"
+        },
+        {
+          "geocode": 3126505,
+          "nome": "Francisco Badaró"
+        },
+        {
+          "geocode": 3127602,
+          "nome": "Gouveia"
+        },
+        {
+          "geocode": 3132503,
+          "nome": "Itamarandiba"
+        },
+        {
+          "geocode": 3135456,
+          "nome": "Jenipapo de Minas"
+        },
+        {
+          "geocode": 3136520,
+          "nome": "José Gonçalves de Minas"
+        },
+        {
+          "geocode": 3138351,
+          "nome": "Leme do Prado"
+        },
+        {
+          "geocode": 3141801,
+          "nome": "Minas Novas"
+        },
+        {
+          "geocode": 3153301,
+          "nome": "Presidente Kubitschek"
+        },
+        {
+          "geocode": 3160207,
+          "nome": "Santo Antônio do Itambé"
+        },
+        {
+          "geocode": 3125507,
+          "nome": "São Gonçalo do Rio Preto"
+        },
+        {
+          "geocode": 3165909,
+          "nome": "Senador Modestino Gonçalves"
+        },
+        {
+          "geocode": 3166501,
+          "nome": "Serra Azul de Minas"
+        },
+        {
+          "geocode": 3167103,
+          "nome": "Serro"
+        },
+        {
+          "geocode": 3169703,
+          "nome": "Turmalina"
+        },
+        {
+          "geocode": 3171071,
+          "nome": "Veredinha"
+        },
+        {
+          "geocode": 3171600,
+          "nome": "Virgem da Lapa"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "nome": "CISALP - ZURS PATOS DE MINAS",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 20,
+      "municipios": [
+        {
+          "geocode": 3103801,
+          "nome": "Arapuá"
+        },
+        {
+          "geocode": 3108552,
+          "nome": "Brasilândia de Minas"
+        },
+        {
+          "geocode": 3114303,
+          "nome": "Carmo do Paranaíba"
+        },
+        {
+          "geocode": 3120706,
+          "nome": "Cruzeiro da Fortaleza"
+        },
+        {
+          "geocode": 3128600,
+          "nome": "Guarda-Mor"
+        },
+        {
+          "geocode": 3128907,
+          "nome": "Guimarânia"
+        },
+        {
+          "geocode": 3136306,
+          "nome": "João Pinheiro"
+        },
+        {
+          "geocode": 3137106,
+          "nome": "Lagamar"
+        },
+        {
+          "geocode": 3137502,
+          "nome": "Lagoa Formosa"
+        },
+        {
+          "geocode": 3137536,
+          "nome": "Lagoa Grande"
+        },
+        {
+          "geocode": 3141207,
+          "nome": "Matutina"
+        },
+        {
+          "geocode": 3153400,
+          "nome": "Presidente Olegário"
+        },
+        {
+          "geocode": 3155504,
+          "nome": "Rio Paranaíba"
+        },
+        {
+          "geocode": 3159704,
+          "nome": "Santa Rosa da Serra"
+        },
+        {
+          "geocode": 3161700,
+          "nome": "São Gonçalo do Abaeté"
+        },
+        {
+          "geocode": 3162104,
+          "nome": "São Gotardo"
+        },
+        {
+          "geocode": 3166808,
+          "nome": "Serra do Salitre"
+        },
+        {
+          "geocode": 3168903,
+          "nome": "Tiros"
+        },
+        {
+          "geocode": 3170750,
+          "nome": "Varjão de Minas"
+        },
+        {
+          "geocode": 3171006,
+          "nome": "Vazante"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "nome": "CISALP - ZURS UBERABA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 25,
+      "municipios": [
+        {
+          "geocode": 3100708,
+          "nome": "Água Comprida"
+        },
+        {
+          "geocode": 3111408,
+          "nome": "Campo Florido"
+        },
+        {
+          "geocode": 3111507,
+          "nome": "Campos Altos"
+        },
+        {
+          "geocode": 3114550,
+          "nome": "Carneirinho"
+        },
+        {
+          "geocode": 3116902,
+          "nome": "Comendador Gomes"
+        },
+        {
+          "geocode": 3117306,
+          "nome": "Conceição das Alagoas"
+        },
+        {
+          "geocode": 3118205,
+          "nome": "Conquista"
+        },
+        {
+          "geocode": 3121258,
+          "nome": "Delta"
+        },
+        {
+          "geocode": 3127008,
+          "nome": "Fronteira"
+        },
+        {
+          "geocode": 3127107,
+          "nome": "Frutal"
+        },
+        {
+          "geocode": 3129509,
+          "nome": "Ibiá"
+        },
+        {
+          "geocode": 3133402,
+          "nome": "Itapagipe"
+        },
+        {
+          "geocode": 3134400,
+          "nome": "Iturama"
+        },
+        {
+          "geocode": 3138625,
+          "nome": "Limeira do Oeste"
+        },
+        {
+          "geocode": 3149200,
+          "nome": "Pedrinópolis"
+        },
+        {
+          "geocode": 3149804,
+          "nome": "Perdizes"
+        },
+        {
+          "geocode": 3150703,
+          "nome": "Pirajuba"
+        },
+        {
+          "geocode": 3151602,
+          "nome": "Planura"
+        },
+        {
+          "geocode": 3153004,
+          "nome": "Pratinha"
+        },
+        {
+          "geocode": 3156908,
+          "nome": "Sacramento"
+        },
+        {
+          "geocode": 3157708,
+          "nome": "Santa Juliana"
+        },
+        {
+          "geocode": 3161304,
+          "nome": "São Francisco de Sales"
+        },
+        {
+          "geocode": 3168101,
+          "nome": "Tapira"
+        },
+        {
+          "geocode": 3170438,
+          "nome": "União de Minas"
+        },
+        {
+          "geocode": 3171105,
+          "nome": "Veríssimo"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "nome": "CISAMSF - ZURS JANUÁRIA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 24,
+      "municipios": [
+        {
+          "geocode": 3108255,
+          "nome": "Bonito de Minas"
+        },
+        {
+          "geocode": 3108602,
+          "nome": "Brasília de Minas"
+        },
+        {
+          "geocode": 3111150,
+          "nome": "Campo Azul"
+        },
+        {
+          "geocode": 3117836,
+          "nome": "Cônego Marinho"
+        },
+        {
+          "geocode": 3129657,
+          "nome": "Ibiracatu"
+        },
+        {
+          "geocode": 3130051,
+          "nome": "Icaraí de Minas"
+        },
+        {
+          "geocode": 3132107,
+          "nome": "Itacarambi"
+        },
+        {
+          "geocode": 3135357,
+          "nome": "Japonvar"
+        },
+        {
+          "geocode": 3136959,
+          "nome": "Juvenília"
+        },
+        {
+          "geocode": 3138658,
+          "nome": "Lontra"
+        },
+        {
+          "geocode": 3138682,
+          "nome": "Luislândia"
+        },
+        {
+          "geocode": 3139300,
+          "nome": "Manga"
+        },
+        {
+          "geocode": 3142254,
+          "nome": "Miravânia"
+        },
+        {
+          "geocode": 3142700,
+          "nome": "Montalvânia"
+        },
+        {
+          "geocode": 3147956,
+          "nome": "Patis"
+        },
+        {
+          "geocode": 3149150,
+          "nome": "Pedras de Maria da Cruz"
+        },
+        {
+          "geocode": 3150570,
+          "nome": "Pintópolis"
+        },
+        {
+          "geocode": 3161106,
+          "nome": "São Francisco"
+        },
+        {
+          "geocode": 3162401,
+          "nome": "São João da Ponte"
+        },
+        {
+          "geocode": 3162450,
+          "nome": "São João das Missões"
+        },
+        {
+          "geocode": 3164209,
+          "nome": "São Romão"
+        },
+        {
+          "geocode": 3170008,
+          "nome": "Ubaí"
+        },
+        {
+          "geocode": 3170529,
+          "nome": "Urucuia"
+        },
+        {
+          "geocode": 3170909,
+          "nome": "Varzelândia"
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "nome": "CISARP - ZURS MONTES CLAROS",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 53,
+      "municipios": [
+        {
+          "geocode": 3106655,
+          "nome": "Berizal"
+        },
+        {
+          "geocode": 3107307,
+          "nome": "Bocaiúva"
+        },
+        {
+          "geocode": 3108503,
+          "nome": "Botumirim"
+        },
+        {
+          "geocode": 3112703,
+          "nome": "Capitão Enéas"
+        },
+        {
+          "geocode": 3115474,
+          "nome": "Catuti"
+        },
+        {
+          "geocode": 3116506,
+          "nome": "Claro dos Poções"
+        },
+        {
+          "geocode": 3118809,
+          "nome": "Coração de Jesus"
+        },
+        {
+          "geocode": 3120300,
+          "nome": "Cristália"
+        },
+        {
+          "geocode": 3120870,
+          "nome": "Curral de Dentro"
+        },
+        {
+          "geocode": 3123809,
+          "nome": "Engenheiro Navarro"
+        },
+        {
+          "geocode": 3124302,
+          "nome": "Espinosa"
+        },
+        {
+          "geocode": 3126604,
+          "nome": "Francisco Dumont"
+        },
+        {
+          "geocode": 3126703,
+          "nome": "Francisco Sá"
+        },
+        {
+          "geocode": 3127073,
+          "nome": "Fruta de Leite"
+        },
+        {
+          "geocode": 3127339,
+          "nome": "Gameleiras"
+        },
+        {
+          "geocode": 3127354,
+          "nome": "Glaucilândia"
+        },
+        {
+          "geocode": 3127800,
+          "nome": "Grão Mogol"
+        },
+        {
+          "geocode": 3128253,
+          "nome": "Guaraciama"
+        },
+        {
+          "geocode": 3130655,
+          "nome": "Indaiabira"
+        },
+        {
+          "geocode": 3132008,
+          "nome": "Itacambira"
+        },
+        {
+          "geocode": 3135050,
+          "nome": "Jaíba"
+        },
+        {
+          "geocode": 3135100,
+          "nome": "Janaúba"
+        },
+        {
+          "geocode": 3135605,
+          "nome": "Jequitaí"
+        },
+        {
+          "geocode": 3136405,
+          "nome": "Joaquim Felício"
+        },
+        {
+          "geocode": 3136579,
+          "nome": "Josenópolis"
+        },
+        {
+          "geocode": 3136801,
+          "nome": "Juramento"
+        },
+        {
+          "geocode": 3137304,
+          "nome": "Lagoa dos Patos"
+        },
+        {
+          "geocode": 3139250,
+          "nome": "Mamonas"
+        },
+        {
+          "geocode": 3140852,
+          "nome": "Matias Cardoso"
+        },
+        {
+          "geocode": 3141009,
+          "nome": "Mato Verde"
+        },
+        {
+          "geocode": 3142007,
+          "nome": "Mirabela"
+        },
+        {
+          "geocode": 3142908,
+          "nome": "Monte Azul"
+        },
+        {
+          "geocode": 3143450,
+          "nome": "Montezuma"
+        },
+        {
+          "geocode": 3144656,
+          "nome": "Ninheira"
+        },
+        {
+          "geocode": 3145059,
+          "nome": "Nova Porteirinha"
+        },
+        {
+          "geocode": 3145372,
+          "nome": "Novorizonte"
+        },
+        {
+          "geocode": 3145455,
+          "nome": "Olhos-d'Água"
+        },
+        {
+          "geocode": 3146255,
+          "nome": "Padre Carvalho"
+        },
+        {
+          "geocode": 3146552,
+          "nome": "Pai Pedro"
+        },
+        {
+          "geocode": 3152204,
+          "nome": "Porteirinha"
+        },
+        {
+          "geocode": 3154507,
+          "nome": "Riacho dos Machados"
+        },
+        {
+          "geocode": 3155603,
+          "nome": "Rio Pardo de Minas"
+        },
+        {
+          "geocode": 3156502,
+          "nome": "Rubelita"
+        },
+        {
+          "geocode": 3157005,
+          "nome": "Salinas"
+        },
+        {
+          "geocode": 3157377,
+          "nome": "Santa Cruz de Salinas"
+        },
+        {
+          "geocode": 3160454,
+          "nome": "Santo Antônio do Retiro"
+        },
+        {
+          "geocode": 3162252,
+          "nome": "São João da Lagoa"
+        },
+        {
+          "geocode": 3162658,
+          "nome": "São João do Pacuí"
+        },
+        {
+          "geocode": 3162708,
+          "nome": "São João do Paraíso"
+        },
+        {
+          "geocode": 3166956,
+          "nome": "Serranópolis de Minas"
+        },
+        {
+          "geocode": 3168002,
+          "nome": "Taiobeiras"
+        },
+        {
+          "geocode": 3170651,
+          "nome": "Vargem Grande do Rio Pardo"
+        },
+        {
+          "geocode": 3171030,
+          "nome": "Verdelândia"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "nome": "CISCAPARAO - ZURS MANHUAÇU",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 33,
+      "municipios": [
+        {
+          "geocode": 3100302,
+          "nome": "Abre Campo"
+        },
+        {
+          "geocode": 3102050,
+          "nome": "Alto Caparaó"
+        },
+        {
+          "geocode": 3153509,
+          "nome": "Alto Jequitibá"
+        },
+        {
+          "geocode": 3110103,
+          "nome": "Caiana"
+        },
+        {
+          "geocode": 3112109,
+          "nome": "Caparaó"
+        },
+        {
+          "geocode": 3112901,
+          "nome": "Caputira"
+        },
+        {
+          "geocode": 3113305,
+          "nome": "Carangola"
+        },
+        {
+          "geocode": 3116001,
+          "nome": "Chalé"
+        },
+        {
+          "geocode": 3117405,
+          "nome": "Conceição de Ipanema"
+        },
+        {
+          "geocode": 3122009,
+          "nome": "Divino"
+        },
+        {
+          "geocode": 3123528,
+          "nome": "Durandé"
+        },
+        {
+          "geocode": 3124203,
+          "nome": "Espera Feliz"
+        },
+        {
+          "geocode": 3125309,
+          "nome": "Faria Lemos"
+        },
+        {
+          "geocode": 3125952,
+          "nome": "Fervedouro"
+        },
+        {
+          "geocode": 3131208,
+          "nome": "Ipanema"
+        },
+        {
+          "geocode": 3137700,
+          "nome": "Lajinha"
+        },
+        {
+          "geocode": 3138674,
+          "nome": "Luisburgo"
+        },
+        {
+          "geocode": 3139508,
+          "nome": "Manhumirim"
+        },
+        {
+          "geocode": 3140530,
+          "nome": "Martins Soares"
+        },
+        {
+          "geocode": 3140902,
+          "nome": "Matipó"
+        },
+        {
+          "geocode": 3144003,
+          "nome": "Mutum"
+        },
+        {
+          "geocode": 3145877,
+          "nome": "Orizânia"
+        },
+        {
+          "geocode": 3148756,
+          "nome": "Pedra Bonita"
+        },
+        {
+          "geocode": 3149002,
+          "nome": "Pedra Dourada"
+        },
+        {
+          "geocode": 3151909,
+          "nome": "Pocrane"
+        },
+        {
+          "geocode": 3154150,
+          "nome": "Reduto"
+        },
+        {
+          "geocode": 3157906,
+          "nome": "Santa Margarida"
+        },
+        {
+          "geocode": 3158904,
+          "nome": "Santana do Manhuaçu"
+        },
+        {
+          "geocode": 3162559,
+          "nome": "São João do Manhuaçu"
+        },
+        {
+          "geocode": 3163607,
+          "nome": "São José do Mantimento"
+        },
+        {
+          "geocode": 3167608,
+          "nome": "Simonésia"
+        },
+        {
+          "geocode": 3168051,
+          "nome": "Taparuba"
+        },
+        {
+          "geocode": 3169208,
+          "nome": "Tombos"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "nome": "CISDOCE - ZURS GV",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 50,
+      "municipios": [
+        {
+          "geocode": 3100609,
+          "nome": "Água Boa"
+        },
+        {
+          "geocode": 3101102,
+          "nome": "Aimorés"
+        },
+        {
+          "geocode": 3101805,
+          "nome": "Alpercata"
+        },
+        {
+          "geocode": 3102209,
+          "nome": "Alvarenga"
+        },
+        {
+          "geocode": 3112059,
+          "nome": "Cantagalo"
+        },
+        {
+          "geocode": 3112653,
+          "nome": "Capitão Andrade"
+        },
+        {
+          "geocode": 3115706,
+          "nome": "Central de Minas"
+        },
+        {
+          "geocode": 3118403,
+          "nome": "Conselheiro Pena"
+        },
+        {
+          "geocode": 3119203,
+          "nome": "Coroaci"
+        },
+        {
+          "geocode": 3120839,
+          "nome": "Cuparaque"
+        },
+        {
+          "geocode": 3122108,
+          "nome": "Divino das Laranjeiras"
+        },
+        {
+          "geocode": 3122207,
+          "nome": "Divinolândia de Minas"
+        },
+        {
+          "geocode": 3123700,
+          "nome": "Engenheiro Caldas"
+        },
+        {
+          "geocode": 3125804,
+          "nome": "Fernandes Tourinho"
+        },
+        {
+          "geocode": 3126901,
+          "nome": "Frei Inocêncio"
+        },
+        {
+          "geocode": 3126950,
+          "nome": "Frei Lagonegro"
+        },
+        {
+          "geocode": 3127305,
+          "nome": "Galiléia"
+        },
+        {
+          "geocode": 3127370,
+          "nome": "Goiabeira"
+        },
+        {
+          "geocode": 3127503,
+          "nome": "Gonzaga"
+        },
+        {
+          "geocode": 3131802,
+          "nome": "Itabirinha"
+        },
+        {
+          "geocode": 3133204,
+          "nome": "Itanhomi"
+        },
+        {
+          "geocode": 3134103,
+          "nome": "Itueta"
+        },
+        {
+          "geocode": 3135076,
+          "nome": "Jampruca"
+        },
+        {
+          "geocode": 3136553,
+          "nome": "José Raydan"
+        },
+        {
+          "geocode": 3139607,
+          "nome": "Mantena"
+        },
+        {
+          "geocode": 3140100,
+          "nome": "Marilac"
+        },
+        {
+          "geocode": 3171501,
+          "nome": "Mathias Lobato"
+        },
+        {
+          "geocode": 3141504,
+          "nome": "Mendes Pimentel"
+        },
+        {
+          "geocode": 3144201,
+          "nome": "Nacip Raydan"
+        },
+        {
+          "geocode": 3144672,
+          "nome": "Nova Belém"
+        },
+        {
+          "geocode": 3148400,
+          "nome": "Paulistas"
+        },
+        {
+          "geocode": 3148608,
+          "nome": "Peçanha"
+        },
+        {
+          "geocode": 3154309,
+          "nome": "Resplendor"
+        },
+        {
+          "geocode": 3157500,
+          "nome": "Santa Efigênia de Minas"
+        },
+        {
+          "geocode": 3158201,
+          "nome": "Santa Maria do Suaçuí"
+        },
+        {
+          "geocode": 3159506,
+          "nome": "Santa Rita do Itueto"
+        },
+        {
+          "geocode": 3161056,
+          "nome": "São Félix de Minas"
+        },
+        {
+          "geocode": 3161601,
+          "nome": "São Geraldo da Piedade"
+        },
+        {
+          "geocode": 3161650,
+          "nome": "São Geraldo do Baixio"
+        },
+        {
+          "geocode": 3162575,
+          "nome": "São João do Manteninha"
+        },
+        {
+          "geocode": 3162807,
+          "nome": "São João Evangelista"
+        },
+        {
+          "geocode": 3163003,
+          "nome": "São José da Safira"
+        },
+        {
+          "geocode": 3163508,
+          "nome": "São José do Jacuri"
+        },
+        {
+          "geocode": 3164100,
+          "nome": "São Pedro do Suaçuí"
+        },
+        {
+          "geocode": 3164506,
+          "nome": "São Sebastião do Maranhão"
+        },
+        {
+          "geocode": 3165503,
+          "nome": "Sardoá"
+        },
+        {
+          "geocode": 3167707,
+          "nome": "Sobrália"
+        },
+        {
+          "geocode": 3168408,
+          "nome": "Tarumirim"
+        },
+        {
+          "geocode": 3169505,
+          "nome": "Tumiritinga"
+        },
+        {
+          "geocode": 3171907,
+          "nome": "Virgolândia"
+        }
+      ]
+    },
+    {
+      "id": 86,
+      "nome": "CISLAGOS - ZURS ALFENAS",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 24,
+      "municipios": [
+        {
+          "geocode": 3101607,
+          "nome": "Alfenas"
+        },
+        {
+          "geocode": 3102001,
+          "nome": "Alterosa"
+        },
+        {
+          "geocode": 3104106,
+          "nome": "Arceburgo"
+        },
+        {
+          "geocode": 3104304,
+          "nome": "Areado"
+        },
+        {
+          "geocode": 3105301,
+          "nome": "Bandeira do Sul"
+        },
+        {
+          "geocode": 3108404,
+          "nome": "Botelhos"
+        },
+        {
+          "geocode": 3109501,
+          "nome": "Cabo Verde"
+        },
+        {
+          "geocode": 3111002,
+          "nome": "Campestre"
+        },
+        {
+          "geocode": 3111309,
+          "nome": "Campo do Meio"
+        },
+        {
+          "geocode": 3111606,
+          "nome": "Campos Gerais"
+        },
+        {
+          "geocode": 3114709,
+          "nome": "Carvalhópolis"
+        },
+        {
+          "geocode": 3117108,
+          "nome": "Conceição da Aparecida"
+        },
+        {
+          "geocode": 3122405,
+          "nome": "Divisa Nova"
+        },
+        {
+          "geocode": 3125200,
+          "nome": "Fama"
+        },
+        {
+          "geocode": 3128303,
+          "nome": "Guaranésia"
+        },
+        {
+          "geocode": 3128709,
+          "nome": "Guaxupé"
+        },
+        {
+          "geocode": 3136900,
+          "nome": "Juruaia"
+        },
+        {
+          "geocode": 3139003,
+          "nome": "Machado"
+        },
+        {
+          "geocode": 3143005,
+          "nome": "Monte Belo"
+        },
+        {
+          "geocode": 3144102,
+          "nome": "Muzambinho"
+        },
+        {
+          "geocode": 3147204,
+          "nome": "Paraguaçu"
+        },
+        {
+          "geocode": 3151701,
+          "nome": "Poço Fundo"
+        },
+        {
+          "geocode": 3163904,
+          "nome": "São Pedro da Uni��o"
+        },
+        {
+          "geocode": 3166907,
+          "nome": "Serrania"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "nome": "CISMAS - ZURS POUSO ALEGRE",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 51,
+      "municipios": [
+        {
+          "geocode": 3101409,
+          "nome": "Albertina"
+        },
+        {
+          "geocode": 3102605,
+          "nome": "Andradas"
+        },
+        {
+          "geocode": 3107901,
+          "nome": "Bom Repouso"
+        },
+        {
+          "geocode": 3108305,
+          "nome": "Borda da Mata"
+        },
+        {
+          "geocode": 3108909,
+          "nome": "Brazópolis"
+        },
+        {
+          "geocode": 3109105,
+          "nome": "Bueno Brandão"
+        },
+        {
+          "geocode": 3109709,
+          "nome": "Cachoeira de Minas"
+        },
+        {
+          "geocode": 3110301,
+          "nome": "Caldas"
+        },
+        {
+          "geocode": 3110509,
+          "nome": "Camanducaia"
+        },
+        {
+          "geocode": 3110608,
+          "nome": "Cambuí"
+        },
+        {
+          "geocode": 3113602,
+          "nome": "Careaçu"
+        },
+        {
+          "geocode": 3117207,
+          "nome": "Conceição das Pedras"
+        },
+        {
+          "geocode": 3117801,
+          "nome": "Conceição dos Ouros"
+        },
+        {
+          "geocode": 3117900,
+          "nome": "Congonhal"
+        },
+        {
+          "geocode": 3118502,
+          "nome": "Consolação"
+        },
+        {
+          "geocode": 3119906,
+          "nome": "Córrego do Bom Jesus"
+        },
+        {
+          "geocode": 3121100,
+          "nome": "Delfim Moreira"
+        },
+        {
+          "geocode": 3124401,
+          "nome": "Espírito Santo do Dourado"
+        },
+        {
+          "geocode": 3124500,
+          "nome": "Estiva"
+        },
+        {
+          "geocode": 3125101,
+          "nome": "Extrema"
+        },
+        {
+          "geocode": 3127404,
+          "nome": "Gonçalves"
+        },
+        {
+          "geocode": 3129202,
+          "nome": "Heliodora"
+        },
+        {
+          "geocode": 3129905,
+          "nome": "Ibitiúra de Minas"
+        },
+        {
+          "geocode": 3130606,
+          "nome": "Inconfidentes"
+        },
+        {
+          "geocode": 3131505,
+          "nome": "Ipuiúna"
+        },
+        {
+          "geocode": 3132404,
+          "nome": "Itajubá"
+        },
+        {
+          "geocode": 3133600,
+          "nome": "Itapeva"
+        },
+        {
+          "geocode": 3134905,
+          "nome": "Jacutinga"
+        },
+        {
+          "geocode": 3139904,
+          "nome": "Maria da Fé"
+        },
+        {
+          "geocode": 3140407,
+          "nome": "Marmelópolis"
+        },
+        {
+          "geocode": 3143401,
+          "nome": "Monte Sião"
+        },
+        {
+          "geocode": 3143807,
+          "nome": "Munhoz"
+        },
+        {
+          "geocode": 3144409,
+          "nome": "Natércia"
+        },
+        {
+          "geocode": 3146008,
+          "nome": "Ouro Fino"
+        },
+        {
+          "geocode": 3147303,
+          "nome": "Paraisópolis"
+        },
+        {
+          "geocode": 3149101,
+          "nome": "Pedralva"
+        },
+        {
+          "geocode": 3150901,
+          "nome": "Piranguçu"
+        },
+        {
+          "geocode": 3151008,
+          "nome": "Piranguinho"
+        },
+        {
+          "geocode": 3159209,
+          "nome": "Santa Rita de Caldas"
+        },
+        {
+          "geocode": 3159605,
+          "nome": "Santa Rita do Sapucaí"
+        },
+        {
+          "geocode": 3162302,
+          "nome": "São João da Mata"
+        },
+        {
+          "geocode": 3163201,
+          "nome": "São José do Alegre"
+        },
+        {
+          "geocode": 3164407,
+          "nome": "São Sebastião da Bela Vista"
+        },
+        {
+          "geocode": 3165404,
+          "nome": "Sapucaí-Mirim"
+        },
+        {
+          "geocode": 3165578,
+          "nome": "Senador Amaral"
+        },
+        {
+          "geocode": 3165800,
+          "nome": "Senador José Bento"
+        },
+        {
+          "geocode": 3167400,
+          "nome": "Silvianópolis"
+        },
+        {
+          "geocode": 3169059,
+          "nome": "Tocos do Moji"
+        },
+        {
+          "geocode": 3169109,
+          "nome": "Toledo"
+        },
+        {
+          "geocode": 3169802,
+          "nome": "Turvolândia"
+        },
+        {
+          "geocode": 3172202,
+          "nome": "Wenceslau Braz"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "nome": "CISMEPI - ZURS ITABIRA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 25,
+      "municipios": [
+        {
+          "geocode": 3105400,
+          "nome": "Barão de Cocais"
+        },
+        {
+          "geocode": 3106002,
+          "nome": "Bela Vista de Minas"
+        },
+        {
+          "geocode": 3107703,
+          "nome": "Bom Jesus do Amparo"
+        },
+        {
+          "geocode": 3113800,
+          "nome": "Carmésia"
+        },
+        {
+          "geocode": 3115359,
+          "nome": "Catas Altas"
+        },
+        {
+          "geocode": 3122603,
+          "nome": "Dom Joaquim"
+        },
+        {
+          "geocode": 3123106,
+          "nome": "Dores de Guanhães"
+        },
+        {
+          "geocode": 3125903,
+          "nome": "Ferros"
+        },
+        {
+          "geocode": 3128006,
+          "nome": "Guanhães"
+        },
+        {
+          "geocode": 3132800,
+          "nome": "Itambé do Mato Dentro"
+        },
+        {
+          "geocode": 3140605,
+          "nome": "Materlândia"
+        },
+        {
+          "geocode": 3143708,
+          "nome": "Morro do Pilar"
+        },
+        {
+          "geocode": 3144706,
+          "nome": "Nova Era"
+        },
+        {
+          "geocode": 3147501,
+          "nome": "Passabém"
+        },
+        {
+          "geocode": 3155702,
+          "nome": "Rio Piracicaba"
+        },
+        {
+          "geocode": 3156007,
+          "nome": "Rio Vermelho"
+        },
+        {
+          "geocode": 3156809,
+          "nome": "Sabinópolis"
+        },
+        {
+          "geocode": 3157203,
+          "nome": "Santa Bárbara"
+        },
+        {
+          "geocode": 3158003,
+          "nome": "Santa Maria de Itabira"
+        },
+        {
+          "geocode": 3160504,
+          "nome": "Santo Antônio do Rio Abaixo"
+        },
+        {
+          "geocode": 3161007,
+          "nome": "São Domingos do Prata"
+        },
+        {
+          "geocode": 3161908,
+          "nome": "São Gonçalo do Rio Abaixo"
+        },
+        {
+          "geocode": 3164803,
+          "nome": "São Sebastião do Rio Preto"
+        },
+        {
+          "geocode": 3166105,
+          "nome": "Senhora do Porto"
+        },
+        {
+          "geocode": 3171808,
+          "nome": "Virginópolis"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "nome": "CISMISEL - ZURS SETE LAGOAS",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 33,
+      "municipios": [
+        {
+          "geocode": 3100203,
+          "nome": "Abaeté"
+        },
+        {
+          "geocode": 3103207,
+          "nome": "Araçaí"
+        },
+        {
+          "geocode": 3104809,
+          "nome": "Augusto de Lima"
+        },
+        {
+          "geocode": 3105004,
+          "nome": "Baldim"
+        },
+        {
+          "geocode": 3107000,
+          "nome": "Biquinhas"
+        },
+        {
+          "geocode": 3109204,
+          "nome": "Buenópolis"
+        },
+        {
+          "geocode": 3109600,
+          "nome": "Cachoeira da Prata"
+        },
+        {
+          "geocode": 3109907,
+          "nome": "Caetanópolis"
+        },
+        {
+          "geocode": 3112505,
+          "nome": "Capim Branco"
+        },
+        {
+          "geocode": 3115607,
+          "nome": "Cedro do Abaeté"
+        },
+        {
+          "geocode": 3118908,
+          "nome": "Cordisburgo"
+        },
+        {
+          "geocode": 3119104,
+          "nome": "Corinto"
+        },
+        {
+          "geocode": 3125705,
+          "nome": "Felixlândia"
+        },
+        {
+          "geocode": 3126406,
+          "nome": "Fortuna de Minas"
+        },
+        {
+          "geocode": 3127206,
+          "nome": "Funilândia"
+        },
+        {
+          "geocode": 3131000,
+          "nome": "Inhaúma"
+        },
+        {
+          "geocode": 3131109,
+          "nome": "Inimutaba"
+        },
+        {
+          "geocode": 3135704,
+          "nome": "Jequitibá"
+        },
+        {
+          "geocode": 3139706,
+          "nome": "Maravilhas"
+        },
+        {
+          "geocode": 3142502,
+          "nome": "Monjolos"
+        },
+        {
+          "geocode": 3143500,
+          "nome": "Morada Nova de Minas"
+        },
+        {
+          "geocode": 3143609,
+          "nome": "Morro da Garça"
+        },
+        {
+          "geocode": 3146404,
+          "nome": "Paineiras"
+        },
+        {
+          "geocode": 3146909,
+          "nome": "Papagaios"
+        },
+        {
+          "geocode": 3147402,
+          "nome": "Paraopeba"
+        },
+        {
+          "geocode": 3149606,
+          "nome": "Pequi"
+        },
+        {
+          "geocode": 3152006,
+          "nome": "Pompéu"
+        },
+        {
+          "geocode": 3153202,
+          "nome": "Presidente Juscelino"
+        },
+        {
+          "geocode": 3153608,
+          "nome": "Prudente de Morais"
+        },
+        {
+          "geocode": 3153707,
+          "nome": "Quartel Geral"
+        },
+        {
+          "geocode": 3158508,
+          "nome": "Santana de Pirapama"
+        },
+        {
+          "geocode": 3160603,
+          "nome": "Santo Hipólito"
+        },
+        {
+          "geocode": 3169356,
+          "nome": "Três Marias"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "nome": "CISUM - ZURS LEOPOLDINA",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 15,
+      "municipios": [
+        {
+          "geocode": 3101508,
+          "nome": "Além Paraíba"
+        },
+        {
+          "geocode": 3104403,
+          "nome": "Argirita"
+        },
+        {
+          "geocode": 3104601,
+          "nome": "Astolfo Dutra"
+        },
+        {
+          "geocode": 3115300,
+          "nome": "Cataguases"
+        },
+        {
+          "geocode": 3122900,
+          "nome": "Dona Euzébia"
+        },
+        {
+          "geocode": 3124609,
+          "nome": "Estrela Dalva"
+        },
+        {
+          "geocode": 3132602,
+          "nome": "Itamarati de Minas"
+        },
+        {
+          "geocode": 3138005,
+          "nome": "Laranjal"
+        },
+        {
+          "geocode": 3138401,
+          "nome": "Leopoldina"
+        },
+        {
+          "geocode": 3146701,
+          "nome": "Palma"
+        },
+        {
+          "geocode": 3151107,
+          "nome": "Pirapetinga"
+        },
+        {
+          "geocode": 3154101,
+          "nome": "Recreio"
+        },
+        {
+          "geocode": 3158409,
+          "nome": "Santana de Cataguases"
+        },
+        {
+          "geocode": 3160009,
+          "nome": "Santo Antônio do Aventureiro"
+        },
+        {
+          "geocode": 3172103,
+          "nome": "Volta Grande"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "nome": "CISVER - ZURS SÃO JOÃO DEL REI",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 17,
+      "municipios": [
+        {
+          "geocode": 3105905,
+          "nome": "Barroso"
+        },
+        {
+          "geocode": 3108008,
+          "nome": "Bom Sucesso"
+        },
+        {
+          "geocode": 3115201,
+          "nome": "Conceição da Barra de Minas"
+        },
+        {
+          "geocode": 3119708,
+          "nome": "Coronel Xavier Chaves"
+        },
+        {
+          "geocode": 3123007,
+          "nome": "Dores de Campos"
+        },
+        {
+          "geocode": 3130002,
+          "nome": "Ibituruna"
+        },
+        {
+          "geocode": 3137403,
+          "nome": "Lagoa Dourada"
+        },
+        {
+          "geocode": 3139102,
+          "nome": "Madre de Deus de Minas"
+        },
+        {
+          "geocode": 3144508,
+          "nome": "Nazareno"
+        },
+        {
+          "geocode": 3150307,
+          "nome": "Piedade do Rio Grande"
+        },
+        {
+          "geocode": 3152709,
+          "nome": "Prados"
+        },
+        {
+          "geocode": 3154200,
+          "nome": "Resende Costa"
+        },
+        {
+          "geocode": 3156106,
+          "nome": "Ritápolis"
+        },
+        {
+          "geocode": 3157336,
+          "nome": "Santa Cruz de Minas"
+        },
+        {
+          "geocode": 3165008,
+          "nome": "São Tiago"
+        },
+        {
+          "geocode": 3165305,
+          "nome": "São Vicente de Minas"
+        },
+        {
+          "geocode": 3168804,
+          "nome": "Tiradentes"
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "nome": "CONGONHAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3118007,
+        "nome": "Congonhas"
+      }
+    },
+    {
+      "id": 15,
+      "nome": "CONSAUDE - ZURS CEL FABRICIANO",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 32,
+      "municipios": [
+        {
+          "geocode": 3100500,
+          "nome": "Açucena"
+        },
+        {
+          "geocode": 3103009,
+          "nome": "Antônio Dias"
+        },
+        {
+          "geocode": 3106309,
+          "nome": "Belo Oriente"
+        },
+        {
+          "geocode": 3107802,
+          "nome": "Bom Jesus do Galho"
+        },
+        {
+          "geocode": 3108800,
+          "nome": "Braúnas"
+        },
+        {
+          "geocode": 3109253,
+          "nome": "Bugre"
+        },
+        {
+          "geocode": 3120003,
+          "nome": "Córrego Novo"
+        },
+        {
+          "geocode": 3121803,
+          "nome": "Dionísio"
+        },
+        {
+          "geocode": 3122504,
+          "nome": "Dom Cavati"
+        },
+        {
+          "geocode": 3123858,
+          "nome": "Entre Folhas"
+        },
+        {
+          "geocode": 3129301,
+          "nome": "Iapu"
+        },
+        {
+          "geocode": 3130556,
+          "nome": "Imbé de Minas"
+        },
+        {
+          "geocode": 3130903,
+          "nome": "Inhapim"
+        },
+        {
+          "geocode": 3131158,
+          "nome": "Ipaba"
+        },
+        {
+          "geocode": 3135001,
+          "nome": "Jaguaraçu"
+        },
+        {
+          "geocode": 3136108,
+          "nome": "Joanésia"
+        },
+        {
+          "geocode": 3140308,
+          "nome": "Marliéria"
+        },
+        {
+          "geocode": 3141702,
+          "nome": "Mesquita"
+        },
+        {
+          "geocode": 3144359,
+          "nome": "Naque"
+        },
+        {
+          "geocode": 3149952,
+          "nome": "Periquito"
+        },
+        {
+          "geocode": 3150158,
+          "nome": "Piedade de Caratinga"
+        },
+        {
+          "geocode": 3150539,
+          "nome": "Pingo-d'Água"
+        },
+        {
+          "geocode": 3157252,
+          "nome": "Santa Bárbara do Leste"
+        },
+        {
+          "geocode": 3159357,
+          "nome": "Santa Rita de Minas"
+        },
+        {
+          "geocode": 3158953,
+          "nome": "Santana do Paraíso"
+        },
+        {
+          "geocode": 3160959,
+          "nome": "São Domingos das Dores"
+        },
+        {
+          "geocode": 3162609,
+          "nome": "São João do Oriente"
+        },
+        {
+          "geocode": 3164472,
+          "nome": "São Sebastião do Anta"
+        },
+        {
+          "geocode": 3168705,
+          "nome": "Timóteo"
+        },
+        {
+          "geocode": 3170057,
+          "nome": "Ubaporanga"
+        },
+        {
+          "geocode": 3170578,
+          "nome": "Vargem Alegre"
+        },
+        {
+          "geocode": 3171154,
+          "nome": "Vermelho Novo"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "nome": "CONTAGEM",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3118601,
+        "nome": "Contagem"
+      }
+    },
+    {
+      "id": 82,
+      "nome": "CORONEL FABRICIANO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3119401,
+        "nome": "Coronel Fabriciano"
+      }
+    },
+    {
+      "id": 53,
+      "nome": "ESMERALDAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3124104,
+        "nome": "Esmeraldas"
+      }
+    },
+    {
+      "id": 54,
+      "nome": "FORMIGA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3126109,
+        "nome": "Formiga"
+      }
+    },
+    {
+      "id": 84,
+      "nome": "GOVERNADOR VALADARES",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3127701,
+        "nome": "Governador Valadares"
+      }
+    },
+    {
+      "id": 56,
+      "nome": "IBIRITÉ",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3129806,
+        "nome": "Ibirité"
+      }
+    },
+    {
+      "id": 19,
+      "nome": "ICISMEP - ZURS BHTE",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 21,
+      "municipios": [
+        {
+          "geocode": 3106408,
+          "nome": "Belo Vale"
+        },
+        {
+          "geocode": 3108107,
+          "nome": "Bonfim"
+        },
+        {
+          "geocode": 3110004,
+          "nome": "Caeté"
+        },
+        {
+          "geocode": 3117876,
+          "nome": "Confins"
+        },
+        {
+          "geocode": 3120607,
+          "nome": "Crucilândia"
+        },
+        {
+          "geocode": 3126000,
+          "nome": "Florestal"
+        },
+        {
+          "geocode": 3131901,
+          "nome": "Itabirito"
+        },
+        {
+          "geocode": 3134608,
+          "nome": "Jaboticatubas"
+        },
+        {
+          "geocode": 3140159,
+          "nome": "Mário Campos"
+        },
+        {
+          "geocode": 3140704,
+          "nome": "Mateus Leme"
+        },
+        {
+          "geocode": 3142304,
+          "nome": "Moeda"
+        },
+        {
+          "geocode": 3136603,
+          "nome": "Nova União"
+        },
+        {
+          "geocode": 3146107,
+          "nome": "Ouro Preto"
+        },
+        {
+          "geocode": 3150406,
+          "nome": "Piedade dos Gerais"
+        },
+        {
+          "geocode": 3153905,
+          "nome": "Raposos"
+        },
+        {
+          "geocode": 3154804,
+          "nome": "Rio Acima"
+        },
+        {
+          "geocode": 3155306,
+          "nome": "Rio Manso"
+        },
+        {
+          "geocode": 3159001,
+          "nome": "Santana do Riacho"
+        },
+        {
+          "geocode": 3162955,
+          "nome": "São José da Lapa"
+        },
+        {
+          "geocode": 3165537,
+          "nome": "Sarzedo"
+        },
+        {
+          "geocode": 3168309,
+          "nome": "Taquaraçu de Minas"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "nome": "ICISMEP - ZURS DIVINÓPOLIS",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 45,
+      "municipios": [
+        {
+          "geocode": 3100807,
+          "nome": "Aguanil"
+        },
+        {
+          "geocode": 3103900,
+          "nome": "Araújos"
+        },
+        {
+          "geocode": 3104205,
+          "nome": "Arcos"
+        },
+        {
+          "geocode": 3105103,
+          "nome": "Bambuí"
+        },
+        {
+          "geocode": 3110400,
+          "nome": "Camacho"
+        },
+        {
+          "geocode": 3111903,
+          "nome": "Cana Verde"
+        },
+        {
+          "geocode": 3112000,
+          "nome": "Candeias"
+        },
+        {
+          "geocode": 3114006,
+          "nome": "Carmo da Mata"
+        },
+        {
+          "geocode": 3114204,
+          "nome": "Carmo do Cajuru"
+        },
+        {
+          "geocode": 3114501,
+          "nome": "Carmópolis de Minas"
+        },
+        {
+          "geocode": 3116605,
+          "nome": "Cláudio"
+        },
+        {
+          "geocode": 3117603,
+          "nome": "Conceição do Pará"
+        },
+        {
+          "geocode": 3119807,
+          "nome": "Córrego Danta"
+        },
+        {
+          "geocode": 3119955,
+          "nome": "Córrego Fundo"
+        },
+        {
+          "geocode": 3120201,
+          "nome": "Cristais"
+        },
+        {
+          "geocode": 3123205,
+          "nome": "Dores do Indaiá"
+        },
+        {
+          "geocode": 3124708,
+          "nome": "Estrela do Indaiá"
+        },
+        {
+          "geocode": 3130200,
+          "nome": "Igaratinga"
+        },
+        {
+          "geocode": 3130309,
+          "nome": "Iguatama"
+        },
+        {
+          "geocode": 3132206,
+          "nome": "Itaguara"
+        },
+        {
+          "geocode": 3133501,
+          "nome": "Itapecerica"
+        },
+        {
+          "geocode": 3133709,
+          "nome": "Itatiaiuçu"
+        },
+        {
+          "geocode": 3135308,
+          "nome": "Japaraíba"
+        },
+        {
+          "geocode": 3138302,
+          "nome": "Leandro Ferreira"
+        },
+        {
+          "geocode": 3138807,
+          "nome": "Luz"
+        },
+        {
+          "geocode": 3140506,
+          "nome": "Martinho Campos"
+        },
+        {
+          "geocode": 3141306,
+          "nome": "Medeiros"
+        },
+        {
+          "geocode": 3142403,
+          "nome": "Moema"
+        },
+        {
+          "geocode": 3145604,
+          "nome": "Oliveira"
+        },
+        {
+          "geocode": 3145802,
+          "nome": "Onça de Pitangui"
+        },
+        {
+          "geocode": 3146503,
+          "nome": "Pains"
+        },
+        {
+          "geocode": 3147709,
+          "nome": "Passa Tempo"
+        },
+        {
+          "geocode": 3148905,
+          "nome": "Pedra do Indaiá"
+        },
+        {
+          "geocode": 3149705,
+          "nome": "Perdigão"
+        },
+        {
+          "geocode": 3150604,
+          "nome": "Piracema"
+        },
+        {
+          "geocode": 3151404,
+          "nome": "Pitangui"
+        },
+        {
+          "geocode": 3158805,
+          "nome": "Santana do Jacaré"
+        },
+        {
+          "geocode": 3159902,
+          "nome": "Santo Antônio do Amparo"
+        },
+        {
+          "geocode": 3160405,
+          "nome": "Santo Antônio do Monte"
+        },
+        {
+          "geocode": 3161205,
+          "nome": "São Francisco de Paula"
+        },
+        {
+          "geocode": 3161809,
+          "nome": "São Gonçalo do Pará"
+        },
+        {
+          "geocode": 3163102,
+          "nome": "São José da Varginha"
+        },
+        {
+          "geocode": 3164605,
+          "nome": "São Sebastião do Oeste"
+        },
+        {
+          "geocode": 3166600,
+          "nome": "Serra da Saudade"
+        },
+        {
+          "geocode": 3168200,
+          "nome": "Tapiraí"
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "nome": "IGARAPÉ",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3130101,
+        "nome": "Igarapé"
+      }
+    },
+    {
+      "id": 80,
+      "nome": "IPATINGA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3131307,
+        "nome": "Ipatinga"
+      }
+    },
+    {
+      "id": 85,
+      "nome": "ITABIRA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3131703,
+        "nome": "Itabira"
+      }
+    },
+    {
+      "id": 58,
+      "nome": "ITAÚNA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3133808,
+        "nome": "Itaúna"
+      }
+    },
+    {
+      "id": 59,
+      "nome": "ITUIUTABA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3134202,
+        "nome": "Ituiutaba"
+      }
+    },
+    {
+      "id": 60,
+      "nome": "JANUÁRIA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3135209,
+        "nome": "Januária"
+      }
+    },
+    {
+      "id": 61,
+      "nome": "JOÃO MONLEVADE",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3136207,
+        "nome": "João Monlevade"
+      }
+    },
+    {
+      "id": 62,
+      "nome": "JUATUBA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3136652,
+        "nome": "Juatuba"
+      }
+    },
+    {
+      "id": 63,
+      "nome": "LAGOA DA PRATA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3137205,
+        "nome": "Lagoa da Prata"
+      }
+    },
+    {
+      "id": 29,
+      "nome": "MANHUAÇU",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3139409,
+        "nome": "Manhuaçu"
+      }
+    },
+    {
+      "id": 30,
+      "nome": "MATOZINHOS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3141108,
+        "nome": "Matozinhos"
+      }
+    },
+    {
+      "id": 31,
+      "nome": "MONTES CLAROS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3143302,
+        "nome": "Montes Claros"
+      }
+    },
+    {
+      "id": 33,
+      "nome": "MURIAÉ",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3143906,
+        "nome": "Muriaé"
+      }
+    },
+    {
+      "id": 64,
+      "nome": "NOVA LIMA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3144805,
+        "nome": "Nova Lima"
+      }
+    },
+    {
+      "id": 65,
+      "nome": "NOVA SERRANA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3145208,
+        "nome": "Nova Serrana"
+      }
+    },
+    {
+      "id": 66,
+      "nome": "PARÁ DE MINAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3147105,
+        "nome": "Pará de Minas"
+      }
+    },
+    {
+      "id": 77,
+      "nome": "PARACATU",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3147006,
+        "nome": "Paracatu"
+      }
+    },
+    {
+      "id": 34,
+      "nome": "PASSOS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3147907,
+        "nome": "Passos"
+      }
+    },
+    {
+      "id": 36,
+      "nome": "PATOS DE MINAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3148004,
+        "nome": "Patos de Minas"
+      }
+    },
+    {
+      "id": 67,
+      "nome": "PEDRO LEOPOLDO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3149309,
+        "nome": "Pedro Leopoldo"
+      }
+    },
+    {
+      "id": 68,
+      "nome": "POÇOS DE CALDAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3151800,
+        "nome": "Poços de Caldas"
+      }
+    },
+    {
+      "id": 69,
+      "nome": "RIBEIRÃO DAS NEVES",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3154606,
+        "nome": "Ribeirão das Neves"
+      }
+    },
+    {
+      "id": 70,
+      "nome": "SABARÁ",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3156700,
+        "nome": "Sabará"
+      }
+    },
+    {
+      "id": 71,
+      "nome": "SANTA LUZIA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3157807,
+        "nome": "Santa Luzia"
+      }
+    },
+    {
+      "id": 35,
+      "nome": "SÃO JOÃO DEL REI",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3162500,
+        "nome": "São João del Rei"
+      }
+    },
+    {
+      "id": 72,
+      "nome": "SÃO JOAQUIM DE BICAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3162922,
+        "nome": "São Joaquim de Bicas"
+      }
+    },
+    {
+      "id": 78,
+      "nome": "SÃO SEBASTIÃO DO PARAÍSO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3164704,
+        "nome": "São Sebastião do Paraíso"
+      }
+    },
+    {
+      "id": 37,
+      "nome": "SETE LAGOAS",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3167202,
+        "nome": "Sete Lagoas"
+      }
+    },
+    {
+      "id": 73,
+      "nome": "SIMSAUDE - ZURS UBÁ",
+      "eConsorcio": 1,
+      "tipo_financiamento": "Consorcio",
+      "n_municipios": 24,
+      "municipios": [
+        {
+          "geocode": 3103108,
+          "nome": "Antônio Prado de Minas"
+        },
+        {
+          "geocode": 3105509,
+          "nome": "Barão do Monte Alto"
+        },
+        {
+          "geocode": 3108701,
+          "nome": "Brás Pires"
+        },
+        {
+          "geocode": 3121902,
+          "nome": "Divinésia"
+        },
+        {
+          "geocode": 3123304,
+          "nome": "Dores do Turvo"
+        },
+        {
+          "geocode": 3124005,
+          "nome": "Ervália"
+        },
+        {
+          "geocode": 3124906,
+          "nome": "Eugenópolis"
+        },
+        {
+          "geocode": 3128808,
+          "nome": "Guidoval"
+        },
+        {
+          "geocode": 3129004,
+          "nome": "Guiricema"
+        },
+        {
+          "geocode": 3141603,
+          "nome": "Mercês"
+        },
+        {
+          "geocode": 3142106,
+          "nome": "Miradouro"
+        },
+        {
+          "geocode": 3142205,
+          "nome": "Miraí"
+        },
+        {
+          "geocode": 3148202,
+          "nome": "Patrocínio do Muriaé"
+        },
+        {
+          "geocode": 3151305,
+          "nome": "Piraúba"
+        },
+        {
+          "geocode": 3155801,
+          "nome": "Rio Pomba"
+        },
+        {
+          "geocode": 3156452,
+          "nome": "Rosário da Limeira"
+        },
+        {
+          "geocode": 3161403,
+          "nome": "São Francisco do Glória"
+        },
+        {
+          "geocode": 3161502,
+          "nome": "São Geraldo"
+        },
+        {
+          "geocode": 3164431,
+          "nome": "São Sebastião da Vargem Alegre"
+        },
+        {
+          "geocode": 3165701,
+          "nome": "Senador Firmino"
+        },
+        {
+          "geocode": 3167301,
+          "nome": "Silveirânia"
+        },
+        {
+          "geocode": 3167905,
+          "nome": "Tabuleiro"
+        },
+        {
+          "geocode": 3171402,
+          "nome": "Vieiras"
+        },
+        {
+          "geocode": 3172004,
+          "nome": "Visconde do Rio Branco"
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "nome": "TRÊS CORAÇÕES",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3169307,
+        "nome": "Três Corações"
+      }
+    },
+    {
+      "id": 74,
+      "nome": "UBERABA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3170107,
+        "nome": "Uberaba"
+      }
+    },
+    {
+      "id": 39,
+      "nome": "UBERLÂNDIA",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3170206,
+        "nome": "Uberlândia"
+      }
+    },
+    {
+      "id": 75,
+      "nome": "VESPASIANO",
+      "eConsorcio": 0,
+      "tipo_financiamento": "Verba direta",
+      "n_municipios": 1,
+      "municipios": {
+        "geocode": 3171204,
+        "nome": "Vespasiano"
+      }
+    }
+  ]
+}

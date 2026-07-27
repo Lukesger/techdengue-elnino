@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+out/
+*.log
+.env
+.env.*
+!.env.example
+frontend/.env.local
+backend/.env
+read_acessos/
+**/credenciais.env
+.DS_Store
+coverage/
+.turbo/
+*.pem

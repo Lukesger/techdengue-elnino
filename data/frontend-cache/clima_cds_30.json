@@ -1,0 +1,1380 @@
+{
+  "atualizado_em": 1782829754314,
+  "contrato_id": 30,
+  "fonte": "Copernicus CDS (ERA5 + SEAS5)",
+  "periodo_historico": "2015-2026",
+  "n_municipios": 1,
+  "historico": [
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 26.5,
+      "Umidade": 52.0,
+      "Precipitacao": 1.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 24.2,
+      "Umidade": 69.0,
+      "Precipitacao": 5.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.3,
+      "Umidade": 69.0,
+      "Precipitacao": 2.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 23.0,
+      "Umidade": 71.0,
+      "Precipitacao": 2.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 20.6,
+      "Umidade": 71.0,
+      "Precipitacao": 1.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.6,
+      "Umidade": 68.0,
+      "Precipitacao": 0.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 20.1,
+      "Umidade": 64.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 21.1,
+      "Umidade": 57.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 25.2,
+      "Umidade": 49.0,
+      "Precipitacao": 0.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 26.8,
+      "Umidade": 46.0,
+      "Precipitacao": 1.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 26.1,
+      "Umidade": 60.0,
+      "Precipitacao": 5.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2015,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 25.1,
+      "Umidade": 68.0,
+      "Precipitacao": 3.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 24.0,
+      "Umidade": 76.0,
+      "Precipitacao": 10.6
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 25.7,
+      "Umidade": 64.0,
+      "Precipitacao": 1.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.8,
+      "Umidade": 68.0,
+      "Precipitacao": 1.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 24.6,
+      "Umidade": 60.0,
+      "Precipitacao": 1.6
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 21.3,
+      "Umidade": 70.0,
+      "Precipitacao": 0.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.4,
+      "Umidade": 69.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 20.3,
+      "Umidade": 59.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 21.4,
+      "Umidade": 55.0,
+      "Precipitacao": 0.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 23.6,
+      "Umidade": 54.0,
+      "Precipitacao": 1.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 24.8,
+      "Umidade": 56.0,
+      "Precipitacao": 1.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 23.3,
+      "Umidade": 70.0,
+      "Precipitacao": 7.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2016,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 23.7,
+      "Umidade": 72.0,
+      "Precipitacao": 6.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 25.3,
+      "Umidade": 62.0,
+      "Precipitacao": 2.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 24.0,
+      "Umidade": 69.0,
+      "Precipitacao": 2.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.2,
+      "Umidade": 63.0,
+      "Precipitacao": 1.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 23.0,
+      "Umidade": 66.0,
+      "Precipitacao": 0.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 20.7,
+      "Umidade": 72.0,
+      "Precipitacao": 1.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.8,
+      "Umidade": 68.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 17.6,
+      "Umidade": 63.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 20.5,
+      "Umidade": 53.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 21.6,
+      "Umidade": 50.0,
+      "Precipitacao": 0.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 24.5,
+      "Umidade": 54.0,
+      "Precipitacao": 1.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 22.9,
+      "Umidade": 73.0,
+      "Precipitacao": 4.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2017,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 23.9,
+      "Umidade": 73.0,
+      "Precipitacao": 5.6
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 24.8,
+      "Umidade": 63.0,
+      "Precipitacao": 5.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 23.4,
+      "Umidade": 76.0,
+      "Precipitacao": 6.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.1,
+      "Umidade": 75.0,
+      "Precipitacao": 3.6
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 22.3,
+      "Umidade": 69.0,
+      "Precipitacao": 1.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 20.4,
+      "Umidade": 65.0,
+      "Precipitacao": 0.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 20.1,
+      "Umidade": 68.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 19.4,
+      "Umidade": 62.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 20.7,
+      "Umidade": 62.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 23.0,
+      "Umidade": 56.0,
+      "Precipitacao": 1.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 24.6,
+      "Umidade": 62.0,
+      "Precipitacao": 2.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 22.7,
+      "Umidade": 73.0,
+      "Precipitacao": 6.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2018,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 23.8,
+      "Umidade": 71.0,
+      "Precipitacao": 6.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 25.7,
+      "Umidade": 59.0,
+      "Precipitacao": 0.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 24.9,
+      "Umidade": 69.0,
+      "Precipitacao": 5.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.1,
+      "Umidade": 71.0,
+      "Precipitacao": 2.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 23.9,
+      "Umidade": 69.0,
+      "Precipitacao": 0.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 22.1,
+      "Umidade": 70.0,
+      "Precipitacao": 1.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.7,
+      "Umidade": 66.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 18.4,
+      "Umidade": 60.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 20.6,
+      "Umidade": 59.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 24.0,
+      "Umidade": 52.0,
+      "Precipitacao": 1.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 25.2,
+      "Umidade": 52.0,
+      "Precipitacao": 1.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 24.3,
+      "Umidade": 64.0,
+      "Precipitacao": 4.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2019,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 23.7,
+      "Umidade": 70.0,
+      "Precipitacao": 6.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 24.1,
+      "Umidade": 76.0,
+      "Precipitacao": 12.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 23.5,
+      "Umidade": 77.0,
+      "Precipitacao": 6.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 22.6,
+      "Umidade": 75.0,
+      "Precipitacao": 5.6
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 21.9,
+      "Umidade": 76.0,
+      "Precipitacao": 3.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 18.8,
+      "Umidade": 72.0,
+      "Precipitacao": 1.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.2,
+      "Umidade": 67.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 19.6,
+      "Umidade": 64.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 19.4,
+      "Umidade": 60.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 23.6,
+      "Umidade": 46.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 23.9,
+      "Umidade": 61.0,
+      "Precipitacao": 5.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 23.0,
+      "Umidade": 69.0,
+      "Precipitacao": 2.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2020,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 23.9,
+      "Umidade": 69.0,
+      "Precipitacao": 4.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 24.5,
+      "Umidade": 62.0,
+      "Precipitacao": 2.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 23.0,
+      "Umidade": 75.0,
+      "Precipitacao": 9.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 23.7,
+      "Umidade": 66.0,
+      "Precipitacao": 2.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 22.1,
+      "Umidade": 62.0,
+      "Precipitacao": 0.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 21.0,
+      "Umidade": 62.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.5,
+      "Umidade": 65.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 17.9,
+      "Umidade": 55.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 20.2,
+      "Umidade": 53.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 24.6,
+      "Umidade": 47.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 23.2,
+      "Umidade": 68.0,
+      "Precipitacao": 5.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 22.5,
+      "Umidade": 73.0,
+      "Precipitacao": 7.6
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2021,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 22.4,
+      "Umidade": 76.0,
+      "Precipitacao": 7.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 23.4,
+      "Umidade": 75.0,
+      "Precipitacao": 11.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 22.6,
+      "Umidade": 80.0,
+      "Precipitacao": 10.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.2,
+      "Umidade": 63.0,
+      "Precipitacao": 0.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 23.2,
+      "Umidade": 64.0,
+      "Precipitacao": 0.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 19.2,
+      "Umidade": 66.0,
+      "Precipitacao": 0.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 18.5,
+      "Umidade": 64.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 18.6,
+      "Umidade": 62.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 20.0,
+      "Umidade": 53.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 21.9,
+      "Umidade": 55.0,
+      "Precipitacao": 0.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 23.8,
+      "Umidade": 58.0,
+      "Precipitacao": 1.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 21.8,
+      "Umidade": 70.0,
+      "Precipitacao": 6.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2022,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 22.3,
+      "Umidade": 79.0,
+      "Precipitacao": 8.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 22.6,
+      "Umidade": 80.0,
+      "Precipitacao": 9.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 24.1,
+      "Umidade": 70.0,
+      "Precipitacao": 1.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.6,
+      "Umidade": 61.0,
+      "Precipitacao": 0.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 22.5,
+      "Umidade": 70.0,
+      "Precipitacao": 1.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 19.9,
+      "Umidade": 67.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 18.3,
+      "Umidade": 67.0,
+      "Precipitacao": 0.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 19.2,
+      "Umidade": 62.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 20.9,
+      "Umidade": 60.0,
+      "Precipitacao": 1.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 23.9,
+      "Umidade": 56.0,
+      "Precipitacao": 0.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 25.4,
+      "Umidade": 62.0,
+      "Precipitacao": 2.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 26.5,
+      "Umidade": 52.0,
+      "Precipitacao": 1.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2023,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 25.5,
+      "Umidade": 63.0,
+      "Precipitacao": 3.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 24.3,
+      "Umidade": 77.0,
+      "Precipitacao": 7.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 24.0,
+      "Umidade": 74.0,
+      "Precipitacao": 4.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 25.1,
+      "Umidade": 72.0,
+      "Precipitacao": 2.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 24.3,
+      "Umidade": 65.0,
+      "Precipitacao": 0.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 22.6,
+      "Umidade": 62.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 20.1,
+      "Umidade": 60.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 19.8,
+      "Umidade": 56.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 21.1,
+      "Umidade": 49.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 24.7,
+      "Umidade": 42.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 24.4,
+      "Umidade": 60.0,
+      "Precipitacao": 3.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 23.2,
+      "Umidade": 70.0,
+      "Precipitacao": 3.8
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2024,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 23.9,
+      "Umidade": 71.0,
+      "Precipitacao": 6.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 23.6,
+      "Umidade": 78.0,
+      "Precipitacao": 9.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 24.4,
+      "Umidade": 64.0,
+      "Precipitacao": 0.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 24.3,
+      "Umidade": 66.0,
+      "Precipitacao": 2.5
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 22.6,
+      "Umidade": 75.0,
+      "Precipitacao": 2.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 20.2,
+      "Umidade": 69.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 6,
+      "Mes": "Jun",
+      "Temperatura": 19.3,
+      "Umidade": 65.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 7,
+      "Mes": "Jul",
+      "Temperatura": 18.4,
+      "Umidade": 58.0,
+      "Precipitacao": 0.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 8,
+      "Mes": "Ago",
+      "Temperatura": 19.8,
+      "Umidade": 55.0,
+      "Precipitacao": 0.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 9,
+      "Mes": "Set",
+      "Temperatura": 22.4,
+      "Umidade": 51.0,
+      "Precipitacao": 0.2
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 10,
+      "Mes": "Out",
+      "Temperatura": 23.2,
+      "Umidade": 54.0,
+      "Precipitacao": 1.1
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 11,
+      "Mes": "Nov",
+      "Temperatura": 23.4,
+      "Umidade": 64.0,
+      "Precipitacao": 3.0
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2025,
+      "MesNum": 12,
+      "Mes": "Dez",
+      "Temperatura": 24.2,
+      "Umidade": 71.0,
+      "Precipitacao": 6.3
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2026,
+      "MesNum": 1,
+      "Mes": "Jan",
+      "Temperatura": 22.7,
+      "Umidade": 75.0,
+      "Precipitacao": 12.4
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2026,
+      "MesNum": 2,
+      "Mes": "Fev",
+      "Temperatura": 23.1,
+      "Umidade": 80.0,
+      "Precipitacao": 9.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2026,
+      "MesNum": 3,
+      "Mes": "Mar",
+      "Temperatura": 23.1,
+      "Umidade": 77.0,
+      "Precipitacao": 4.9
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2026,
+      "MesNum": 4,
+      "Mes": "Abr",
+      "Temperatura": 22.7,
+      "Umidade": 69.0,
+      "Precipitacao": 0.7
+    },
+    {
+      "geocode": 3141108,
+      "municipio": "",
+      "Ano": 2026,
+      "MesNum": 5,
+      "Mes": "Mai",
+      "Temperatura": 21.6,
+      "Umidade": 70.0,
+      "Precipitacao": 0.2
+    }
+  ],
+  "previsao": []
+}
