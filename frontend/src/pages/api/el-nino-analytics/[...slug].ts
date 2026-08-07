@@ -193,7 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   /** P0: nenhum endpoint El Niño responde sem JWT validado no Nest. */
   const authGate = await carregarAuthEEscopo(req);
-  if (!authGate.ok) {
+  if (authGate.ok === false) {
     return responderAuthFalhou(res, authGate);
   }
   const authScope = authGate;
