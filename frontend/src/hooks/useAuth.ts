@@ -19,6 +19,7 @@ export function useAuth() {
 
   return {
     isAuthenticated: ready,
+    isHydrated: ready,
     isLoading: !ready,
     user: {
       id: 1,

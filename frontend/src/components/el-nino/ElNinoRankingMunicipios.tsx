@@ -194,7 +194,15 @@ function TooltipPoiBairro({
   );
 }
 
-function renderTick({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) {
+function renderTick({
+  x,
+  y,
+  payload,
+}: {
+  x?: string | number;
+  y?: string | number;
+  payload?: { value?: string };
+}) {
   return (
     <text
       x={x}
