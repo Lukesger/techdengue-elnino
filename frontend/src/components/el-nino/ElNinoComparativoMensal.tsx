@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Cell,
   ReferenceArea,
+  ReferenceLine,
 } from 'recharts';
 import { OniMensal, SerieMensal } from '@/services/el-nino-api';
 import { ElNinoGuiaGrafico } from './ElNinoGuiaGrafico';
@@ -52,11 +53,44 @@ const TooltipCustom = ({ active, payload }: any) => {
     <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl">
       <p className="font-semibold mb-1">{p.rotulo}</p>
       <p className="text-red-300">Casos: {p.casos?.toLocaleString('pt-BR')}</p>
-      <p className="text-amber-300">ONI: {p.oni != null ? `${p.oni >= 0 ? '+' : ''}${p.oni.toFixed(2)} °C` : '—'}</p>
+      <p className="text-amber-300">
+        ONI:{' '}
+        {p.oni != null
+          ? `${p.oni >= 0 ? '+' : ''}${Number(p.oni).toFixed(2)}`
+          : '—'}
+      </p>
       <p className="text-gray-400 mt-1">{p.regime}</p>
     </div>
   );
 };
+
+function LegendaComparativo() {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1 text-[11px] text-gray-600">
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block w-3 h-3 rounded-sm bg-blue-500" />
+        Casos · sem El Niño
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block w-3 h-3 rounded-sm bg-orange-500" />
+        Casos · com El Niño (ONI ≥ +0,5)
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block w-3 h-0.5 bg-green-500 relative">
+          <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-green-500" />
+        </span>
+        ONI NOAA
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span
+          className="inline-block w-5 border-t border-dashed border-slate-300"
+          aria-hidden
+        />
+        Marco ONI +0,5 (marca d&apos;água)
+      </span>
+    </div>
+  );
+}
 
 /**
  * Comparativo mensal — barras de casos + linha ONI NOAA (chartHistoricoV2).
@@ -73,10 +107,19 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
 }) => {
   const { pontos, ticksAnuais, rotuloParaAno, dominios } = useMemo(() => {
     if (!serie?.length || anoInicio == null || anoFim == null) {
-      return { pontos: [], ticksAnuais: [], rotuloParaAno: new Map(), dominios: { casos: [0, 100], oni: [-1.5, 2.5] } };
+      return {
+        pontos: [],
+        ticksAnuais: [],
+        rotuloParaAno: new Map(),
+        dominios: { casos: [0, 100], oni: [-1.5, 2.5] },
+      };
     }
 
-    const { anoIni, mesIni, anoFim: af, mesFim: mf } = periodoFiltro(anoInicio, anoFim, mesFim);
+    const { anoIni, mesIni, anoFim: af, mesFim: mf } = periodoFiltro(
+      anoInicio,
+      anoFim,
+      mesFim,
+    );
     const fatia = mesclarOniNaSerie(
       filtrarSerieMesAno(serie, anoIni, mesIni, af, mf),
       oniMensal ?? [],
@@ -107,7 +150,11 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
 
     return {
       pontos: pts,
-      ticksAnuais: ticks.length ? ticks : pts.filter((p, i) => i === 0 || p.ano !== pts[i - 1].ano).map((p) => p.rotulo),
+      ticksAnuais: ticks.length
+        ? ticks
+        : pts
+            .filter((p, i) => i === 0 || p.ano !== pts[i - 1].ano)
+            .map((p) => p.rotulo),
       rotuloParaAno: mapaAno,
       dominios: {
         casos: [0, Math.ceil(maxCasos * 1.1)] as [number, number],
@@ -131,17 +178,30 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
       }
     }
     if (inicio !== null) {
-      faixas.push({ x1: pontos[inicio].rotulo, x2: pontos[pontos.length - 1].rotulo });
+      faixas.push({
+        x1: pontos[inicio].rotulo,
+        x2: pontos[pontos.length - 1].rotulo,
+      });
     }
     return faixas;
   }, [pontos]);
 
   const subtituloPeriodo =
     anoInicio != null && anoFim != null
-      ? rotuloIntervaloMesAno(anoInicio, 1, anoFim, periodoFiltro(anoInicio, anoFim, mesFim).mesFim)
+      ? rotuloIntervaloMesAno(
+          anoInicio,
+          1,
+          anoFim,
+          periodoFiltro(anoInicio, anoFim, mesFim).mesFim,
+        )
       : '';
 
   const escopoRotulo = rotuloEscopoGrafico(nomeMunicipio, nMunicipios);
+  const nOniOk = pontos.filter((p) => p.oni != null).length;
+  const maxCasos = pontos.length ? Math.max(...pontos.map((p) => p.casos)) : 0;
+  const casosAntes2023 = pontos
+    .filter((p) => p.ano < 2023)
+    .reduce((s, p) => s + p.casos, 0);
 
   if (loading) {
     return (
@@ -173,11 +233,15 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
         <p className="text-xs text-gray-400">
           {subtituloPeriodo}
           {escopoRotulo ? ` · ${escopoRotulo}` : ''}
+          {nOniOk > 0 ? ` · ONI em ${nOniOk}/${pontos.length} meses` : ''}
         </p>
       </header>
 
-      <ResponsiveContainer width="100%" height={480}>
-        <ComposedChart data={pontos} margin={{ top: 8, right: 48, left: 8, bottom: 20 }}>
+      <ResponsiveContainer width="100%" height={500}>
+        <ComposedChart
+          data={pontos}
+          margin={{ top: 8, right: 48, left: 8, bottom: 8 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
           {faixasElNino.map((f, i) => (
             <ReferenceArea
@@ -189,6 +253,23 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
               stroke="none"
             />
           ))}
+          {/* Marco horizontal: limiar ONI +0,5 (marca d'água) */}
+          <ReferenceLine
+            yAxisId="oni"
+            y={LIMIAR_ONI}
+            stroke="#94a3b8"
+            strokeWidth={1}
+            strokeDasharray="4 6"
+            strokeOpacity={0.35}
+            ifOverflow="extendDomain"
+            label={{
+              value: 'ONI +0,5',
+              position: 'insideTopRight',
+              fill: '#94a3b8',
+              fontSize: 9,
+              opacity: 0.55,
+            }}
+          />
           <XAxis
             dataKey="rotulo"
             ticks={ticksAnuais}
@@ -200,18 +281,36 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
             tick={{ fontSize: 10, fill: '#64748b' }}
             domain={dominios.casos}
             tickFormatter={(v) => Number(v).toLocaleString('pt-BR')}
-            label={{ value: 'Casos mensais', angle: -90, position: 'insideLeft', fontSize: 10, fill: '#64748b' }}
+            label={{
+              value: 'Casos mensais',
+              angle: -90,
+              position: 'insideLeft',
+              fontSize: 10,
+              fill: '#64748b',
+            }}
           />
           <YAxis
             yAxisId="oni"
             orientation="right"
             domain={dominios.oni}
             tick={{ fontSize: 10, fill: '#16a34a' }}
-            label={{ value: 'ONI NOAA', angle: 90, position: 'insideRight', fontSize: 10, fill: '#16a34a' }}
+            label={{
+              value: 'ONI NOAA',
+              angle: 90,
+              position: 'insideRight',
+              fontSize: 10,
+              fill: '#16a34a',
+            }}
           />
           <Tooltip content={<TooltipCustom />} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar yAxisId="casos" dataKey="casos" name="Casos mensais" radius={[2, 2, 0, 0]}>
+          <Legend content={<LegendaComparativo />} />
+          <Bar
+            yAxisId="casos"
+            dataKey="casos"
+            name="Casos mensais"
+            radius={[2, 2, 0, 0]}
+            legendType="none"
+          >
             {pontos.map((p, i) => (
               <Cell key={i} fill={p.elNino ? '#f97316' : '#3b82f6'} />
             ))}
@@ -222,21 +321,22 @@ export const ElNinoComparativoMensal: React.FC<Props> = ({
             dataKey="oni"
             stroke="#22c55e"
             strokeWidth={2}
-            dot={{ r: 3, fill: '#22c55e' }}
+            dot={{ r: 2.5, fill: '#22c55e' }}
             name="ONI NOAA"
             connectNulls
+            legendType="none"
           />
         </ComposedChart>
       </ResponsiveContainer>
 
-      <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-blue-500" /> Sem El Niño
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-orange-500" /> Com El Niño
-        </span>
-      </div>
+      {maxCasos > 50_000 && casosAntes2023 > 0 && (
+          <p className="text-[10px] text-amber-700/90 mt-2 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
+            Em 2020–2022 o consolidado Infodengue cobre só parte dos meses
+            (jan/mar/jun/jul/nov) e o volume é muito menor que o pico de 2024 —
+            use o tooltip para ler os valores. A linha verde (ONI NOAA) cobre
+            toda a janela.
+          </p>
+        )}
     </article>
   );
 };
