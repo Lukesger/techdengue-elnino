@@ -15,10 +15,8 @@ import elNinoApi, {
   MapaProjecaoResponse,
   SerieConsorcioResponse,
   HistoricoAnual,
-  SerieMensal,
 } from '@/services/el-nino-api';
 
-import { ElNinoHeaderLegenda } from '@/components/el-nino/ElNinoHeaderLegenda';
 import { ElNinoKpiCards } from '@/components/el-nino/ElNinoKpiCards';
 import { ElNinoCarrosselMunicipios } from '@/components/el-nino/ElNinoCarrosselMunicipios';
 import { ElNinoCausaDengue } from '@/components/el-nino/ElNinoCausaDengue';
@@ -44,16 +42,13 @@ import {
   deveExibirProjecaoBairros,
 } from '@/utils/el-nino/projecao-bairros';
 import { ANO_INICIO_PADRAO, anoFimDados } from '@/utils/el-nino/constants';
+import { parseMapaProjecaoQuery } from '@/utils/el-nino/mapa-projecao-href';
 import {
-  filtrarMensalPorAnos,
+  acumularCasosConfirmados,
   filtrarMensalPorGeocode,
-  filtrarOniPorAnos,
-  filtrarSerieMesAno,
-  mensalMunParaSerieMensal,
-  mesclarClimaHistoricoEmMensal,
-  periodoFiltro,
-  resolverMesFimSerie,
 } from '@/utils/el-nino/graficos-filtros';
+import { montarDadosGraficosElNino } from '@/utils/el-nino/montar-dados-graficos';
+import { preferirSerieConsorcioRemontada } from '@/utils/el-nino/montar-serie-consorcio';
 
 /** Resolve contrato do filtro: consórcio explícito ou dono do geocode (VD/consórcio). */
 function resolverContratoEfetivo(
@@ -73,6 +68,41 @@ function resolverContratoEfetivo(
     c.municipios.some((m) => Number(m.geocode) === Number(geocode)),
   );
   return cons?.id ?? null;
+}
+
+/**
+ * Carteiras grandes (gestor) não cabem na querystring e, com contratoId fixo
+ * errado, geram 403 (mun fora do contrato) + timeout no overview Nest.
+ * Acima deste limite não enviamos geocodes[] — o Nest filtra por contrato/JWT.
+ */
+const MAX_GEOCODES_NA_QUERY = 40;
+
+/** Consórcio com mais municípios do escopo do usuário (carrega rápido na 1ª pintura). */
+function maiorConsorcioDoEscopo(
+  escopoGeocodes: number[] | null | undefined,
+  consorcios: Array<{
+    id: number;
+    municipios?: Array<{ geocode: number }>;
+  }>,
+): number | null {
+  const permitidos = new Set(
+    (escopoGeocodes ?? []).map(Number).filter((g) => Number.isFinite(g)),
+  );
+  if (!permitidos.size || !consorcios.length) {
+    return consorcios[0] ? Number(consorcios[0].id) : null;
+  }
+  let bestId: number | null = null;
+  let bestN = -1;
+  for (const c of consorcios) {
+    const n = (c.municipios ?? []).filter((m) =>
+      permitidos.has(Number(m.geocode)),
+    ).length;
+    if (n > bestN) {
+      bestN = n;
+      bestId = Number(c.id);
+    }
+  }
+  return bestId ?? Number(consorcios[0].id);
 }
 
 interface PageState {
@@ -124,6 +154,62 @@ const FILTROS_INICIAIS: FiltrosElNino = {
 
 /** Persistência do filtro entre navegações (ex.: ida/volta do mapa). */
 const FILTROS_STORAGE_KEY = 'el-nino-filtros-territorial';
+
+function chaveFiltrosStorage(userId?: string | null): string {
+  const id = userId != null && String(userId).trim() ? String(userId).trim() : '';
+  return id ? `${FILTROS_STORAGE_KEY}:${id}` : FILTROS_STORAGE_KEY;
+}
+
+/** Descarta geocode/lista fora do escopo JWT (evita 403 ao trocar de usuário). */
+function sanitizarFiltrosNoEscopo(
+  filtros: FiltrosElNino,
+  escopo: { isGlobal?: boolean; geocodes?: number[] | null },
+): FiltrosElNino {
+  if (escopo.isGlobal) return filtros;
+  const permitidos = new Set(
+    (escopo.geocodes ?? [])
+      .map(Number)
+      .filter((g) => Number.isFinite(g) && g > 0),
+  );
+  if (!permitidos.size) {
+    return { ...filtros, geocode: null, geocodes: null };
+  }
+
+  const geocodeOk =
+    filtros.geocode != null && permitidos.has(Number(filtros.geocode))
+      ? Number(filtros.geocode)
+      : null;
+  const geocodesFiltrados = (filtros.geocodes ?? [])
+    .map(Number)
+    .filter((g) => permitidos.has(g));
+  const carteiraGrande = permitidos.size > MAX_GEOCODES_NA_QUERY;
+  const fallback = carteiraGrande ? null : ([...permitidos][0] ?? null);
+
+  let geocodes: number[] | null = null;
+  if (!carteiraGrande) {
+    geocodes = geocodesFiltrados.length
+      ? geocodesFiltrados
+      : [...permitidos];
+  }
+
+  return {
+    ...filtros,
+    geocode: geocodeOk ?? fallback,
+    geocodes,
+  };
+}
+
+function persistirFiltros(filtros: FiltrosElNino, userId?: string | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(
+      chaveFiltrosStorage(userId),
+      JSON.stringify(filtros),
+    );
+  } catch {
+    /* ignore */
+  }
+}
 
 function SecaoAnalytics({
   titulo,
@@ -200,10 +286,15 @@ function NavSecoesPagina({
   );
 }
 
-function carregarFiltrosSalvos(): FiltrosElNino {
+function carregarFiltrosSalvos(userId?: string | null): FiltrosElNino {
   if (typeof window === 'undefined') return FILTROS_INICIAIS;
   try {
-    const raw = window.sessionStorage.getItem(FILTROS_STORAGE_KEY);
+    const key = chaveFiltrosStorage(userId);
+    let raw = window.sessionStorage.getItem(key);
+    // Migração: chave legada sem userId (só se ainda não houver chave do usuário)
+    if (!raw && userId) {
+      raw = window.sessionStorage.getItem(FILTROS_STORAGE_KEY);
+    }
     if (!raw) return FILTROS_INICIAIS;
     const salvo = JSON.parse(raw) as Partial<FiltrosElNino>;
     const fimMax = anoFimDados();
@@ -221,7 +312,14 @@ function carregarFiltrosSalvos(): FiltrosElNino {
     }
     anoFim = Math.min(Math.max(anoFim, ANO_INICIO_PADRAO), fimMax);
     anoInicio = Math.min(Math.max(anoInicio, ANO_INICIO_PADRAO), anoFim);
-    return { ...merged, anoInicio, anoFim };
+    // Lista gigante salva (carteira gestora) travava overview — descarta.
+    const geocodes =
+      Array.isArray(merged.geocodes) &&
+      merged.geocodes.length > 0 &&
+      merged.geocodes.length <= MAX_GEOCODES_NA_QUERY
+        ? merged.geocodes
+        : null;
+    return { ...merged, anoInicio, anoFim, geocodes };
   } catch {
     return FILTROS_INICIAIS;
   }
@@ -277,28 +375,44 @@ export default function ElNinoAnalyticsPage() {
   );
 
   /**
-   * Parâmetros de API — sempre envia contratoId do escopo selecionado.
-   * Sem contrato resolvido, não carrega overview/série (evita default ICISMEP).
+   * Parâmetros de API — contratoId do escopo selecionado.
+   * Carteira grande: não envia geocodes[] (Nest usa contrato ∩ JWT).
    */
-  const paramsApi = useMemo(
-    () => ({
+  const paramsApi = useMemo(() => {
+    const geocodes = filtros.geocodes ?? undefined;
+    const geocodesNaQuery =
+      !modoVisaoGerencialTodos &&
+      geocodes?.length &&
+      geocodes.length <= MAX_GEOCODES_NA_QUERY
+        ? geocodes
+        : undefined;
+    // Com geocode único, trava o contrato dono desse mun (evita 403).
+    const contratoParaGeocode =
+      geocodeFiltroMapa != null
+        ? resolverContratoEfetivo(null, geocodeFiltroMapa, state.consorcios)
+        : null;
+    const contratoId = modoVisaoGerencialTodos
+      ? undefined
+      : (contratoParaGeocode ?? contratoEfetivo ?? undefined);
+
+    return {
       ...(modoVisaoGerencialTodos
         ? { visao: 'todos' as const }
-        : { contratoId: contratoEfetivo ?? undefined }),
-      ...(modoVisaoGerencialTodos ? {} : { geocodes: filtros.geocodes ?? undefined }),
+        : { contratoId }),
+      ...(geocodesNaQuery ? { geocodes: geocodesNaQuery } : {}),
       ano_inicio: filtros.anoInicio,
       ano_fim: filtros.anoFim,
       ...(geocodeFiltroMapa != null ? { geocode: geocodeFiltroMapa } : {}),
-    }),
-    [
-      modoVisaoGerencialTodos,
-      contratoEfetivo,
-      filtros.geocodes,
-      filtros.anoInicio,
-      filtros.anoFim,
-      geocodeFiltroMapa,
-    ],
-  );
+    };
+  }, [
+    modoVisaoGerencialTodos,
+    contratoEfetivo,
+    filtros.geocodes,
+    filtros.anoInicio,
+    filtros.anoFim,
+    geocodeFiltroMapa,
+    state.consorcios,
+  ]);
 
   /** @deprecated use paramsApi — mantido para compatibilidade interna */
   const queryParams = paramsApi;
@@ -320,11 +434,18 @@ export default function ElNinoAnalyticsPage() {
     return state.escopo.municipios;
   }, [state.escopo, filtros.geocodes]);
 
+  /**
+   * Carrossel de KPIs por município: consórcio / gestor / admin com filtro
+   * de contrato (não na visão gerencial agregada de todos).
+   */
+  const carrosselKpisAtivo =
+    !modoVisaoGerencialTodos && municipiosCarrossel.length > 1;
+
   /** KPIs efetivos exibidos: específicos do município ativo ou agregado. */
   const kpisExibidos = useMemo<ElNinoKpisResponse | null>(() => {
     const base =
       filtros.geocode != null
-        ? state.kpisPorMunicipio[filtros.geocode] ?? null
+        ? state.kpisPorMunicipio[filtros.geocode] ?? state.kpis
         : state.kpis;
     if (!base) return null;
 
@@ -332,30 +453,75 @@ export default function ElNinoAnalyticsPage() {
       filtros.geocode != null
         ? state.climaPorMunicipio[filtros.geocode]
         : null;
-    const temp = clima?.atual?.temperatura_c;
-    if (temp == null || temp <= 0) return base;
-
-    const kpis = base.kpis.map((k) => ({ ...k }));
-    const idx = kpis.findIndex((k) => /temperatura/i.test(k.titulo));
-    if (idx < 0) return base;
-
-    const valor = `${String(temp).replace('.', ',')} °C`;
     const nomeMun = municipiosCarrossel.find(
       (m) => m.geocode === filtros.geocode,
     )?.nome;
-    const subtitulo = clima?.cidade
-      ? `${clima.cidade} · clima atual`
-      : nomeMun
-        ? `${nomeMun} · clima atual`
-        : 'Clima atual (Open-Meteo)';
 
-    kpis[idx] = {
-      ...kpis[idx],
-      titulo: 'Temperatura Atual',
-      valor,
-      subtitulo,
-    };
-    return { kpis };
+    const listaBase = Array.isArray(base.kpis)
+      ? base.kpis
+      : Array.isArray(base)
+        ? base
+        : [];
+    if (
+      !listaBase.length &&
+      !Array.isArray(base.kpis) &&
+      !Array.isArray(base)
+    ) {
+      return null;
+    }
+    const kpis = listaBase.map((k) => ({ ...k }));
+    let mudou = false;
+
+    const temp = clima?.atual?.temperatura_c;
+    if (temp != null && temp > 0) {
+      const idx = kpis.findIndex((k) => /temperatura/i.test(k.titulo));
+      if (idx >= 0) {
+        kpis[idx] = {
+          ...kpis[idx],
+          titulo: 'Temperatura atual',
+          valor: `${String(temp).replace('.', ',')} °C`,
+          subtitulo: clima?.cidade
+            ? clima.cidade
+            : nomeMun
+              ? nomeMun
+              : 'Clima atual (Open-Meteo)',
+        };
+        mudou = true;
+      }
+    }
+
+    const umidade = clima?.atual?.umidade_pct;
+    if (umidade != null && Number.isFinite(umidade)) {
+      const idx = kpis.findIndex((k) => /umidade/i.test(k.titulo));
+      if (idx >= 0) {
+        kpis[idx] = {
+          ...kpis[idx],
+          titulo: 'Umidade relativa',
+          valor: `${Math.round(umidade)} %`,
+          subtitulo: nomeMun
+            ? `${nomeMun} · fator de proliferação do vetor`
+            : 'fator de proliferação do vetor',
+        };
+        mudou = true;
+      }
+    }
+
+    // Casos: reforça subtítulo com o município do carrossel quando houver.
+    if (filtros.geocode != null && nomeMun) {
+      const idx = kpis.findIndex((k) => /casos/i.test(k.titulo));
+      if (idx >= 0) {
+        const sub = kpis[idx].subtitulo || '';
+        if (!sub.toLowerCase().includes(nomeMun.toLowerCase())) {
+          kpis[idx] = {
+            ...kpis[idx],
+            subtitulo: sub ? `${nomeMun} · ${sub}` : nomeMun,
+          };
+          mudou = true;
+        }
+      }
+    }
+
+    return mudou || !Array.isArray(base.kpis) ? { kpis } : base;
   }, [
     filtros.geocode,
     state.kpisPorMunicipio,
@@ -364,17 +530,22 @@ export default function ElNinoAnalyticsPage() {
     municipiosCarrossel,
   ]);
 
+  const geocodeClima = filtros.geocode ?? geocodeFiltroMapa;
+
   const climaExibido = useMemo<ClimaForecast | null>(() => {
-    if (filtros.geocode == null) return null;
-    return state.climaPorMunicipio[filtros.geocode] ?? null;
-  }, [filtros.geocode, state.climaPorMunicipio]);
+    if (geocodeClima == null) return null;
+    return state.climaPorMunicipio[geocodeClima] ?? null;
+  }, [geocodeClima, state.climaPorMunicipio]);
 
   const loadingKpisMunicipio =
-    filtros.geocode != null && !state.kpisPorMunicipio[filtros.geocode];
+    filtros.geocode != null &&
+    !state.kpisPorMunicipio[filtros.geocode] &&
+    !state.kpis &&
+    (loading || loadingSecundario);
 
   const loadingClimaMunicipio =
-    filtros.geocode != null &&
-    !state.climaPorMunicipio[filtros.geocode] &&
+    geocodeClima != null &&
+    !state.climaPorMunicipio[geocodeClima] &&
     loadingClima;
 
   const subtitulo = useMemo(() => {
@@ -396,119 +567,30 @@ export default function ElNinoAnalyticsPage() {
     );
   }, [geocodeFiltroMapa, municipiosCarrossel, state.escopo, state.consorcios]);
 
-  const dadosGraficos = useMemo(() => {
-    const ov = state.overview;
-    if (!ov) return null;
-
-    const geocodeGraficos = geocodeFiltroMapa ?? filtros.geocode;
-    const anoInicio = filtros.anoInicio;
-    const anoFim = filtros.anoFim;
-
-    const mensalFiltrado = filtrarMensalPorGeocode(
-      ov.df_mensal_mun ?? [],
-      geocodeGraficos,
-    );
-    let mensalMun = filtrarMensalPorAnos(
-      mesclarClimaHistoricoEmMensal(
-        mensalFiltrado,
-        (ov.clima_historico ?? []) as Array<Record<string, unknown>>,
-        geocodeGraficos,
-      ),
-      anoInicio,
-      anoFim,
-    );
-
-    const serieAgregada: SerieMensal[] =
-      ov.df_serie_ponderada?.length > 0
-        ? ov.df_serie_ponderada
-        : ov.df_serie ?? [];
-
-    /**
-     * Com geocode: preferir linhas municipais. Se o overview trouxe histórico
-     * mas df_mensal_mun veio vazio/descasado, reaproveita df_serie (1 município
-     * no escopo) em vez de zerar comparativo/sazonal/pós-pico.
-     */
-    let serieBruta: SerieMensal[];
-    if (geocodeGraficos != null) {
-      if (mensalMun.length) {
-        serieBruta = mensalMunParaSerieMensal(mensalMun);
-      } else if (serieAgregada.length) {
-        serieBruta = serieAgregada;
-        mensalMun = filtrarMensalPorAnos(
-          serieAgregada.map((r) => ({
-            ...r,
-            geocode: Number(geocodeGraficos),
-          })) as Array<Record<string, unknown>>,
-          anoInicio,
-          anoFim,
-        );
-      } else {
-        serieBruta = [];
-      }
-    } else {
-      serieBruta = serieAgregada;
-    }
-
-    const mesFimDados =
-      ov.mes_fim ??
-      ov.mes_fim_consolidado ??
-      resolverMesFimSerie(serieBruta, anoFim, 12);
-    const { anoIni, mesIni, anoFim: af, mesFim: mf } = periodoFiltro(
-      anoInicio,
-      anoFim,
-      mesFimDados,
-    );
-    const serie = filtrarSerieMesAno(serieBruta, anoIni, mesIni, af, mf);
-    let oniMensal = filtrarOniPorAnos(ov.oni_mensal ?? [], anoInicio, anoFim);
-
-    // Fallback: monta ONI a partir da própria série mensal (quando oni_mensal falha).
-    if (!oniMensal.length && serie.length) {
-      oniMensal = serie
-        .filter((r) => r.ONI != null && Number.isFinite(Number(r.ONI)))
-        .map((r) => ({
-          ano: Number(r.Ano),
-          mes: Number(r.MesNum),
-          oni: Number(r.ONI),
-        }));
-    }
-
-    const nMunicipios =
-      geocodeGraficos != null
-        ? 1
-        : ov.municipios?.length ?? state.escopo?.municipios?.length ?? 0;
-
-    const historicoBruto: HistoricoAnual[] =
-      (ov.df_historico_ponderado?.length
-        ? ov.df_historico_ponderado
-        : ov.df_historico) ??
-      state.historico ??
-      [];
-    const historicoAnual = historicoBruto.filter(
-      (h) => h.Ano >= anoInicio && h.Ano <= anoFim,
-    );
-
-    return {
-      serie,
-      mensalMun,
-      oniMensal,
-      comparativoMensal:
-        ov.elnino?.comparativo_mensal ?? state.comparativo?.mensal ?? [],
-      historicoAnual,
-      mesFim: mesFimDados,
-      nMunicipios,
-      nomeMunicipio: nomeMunicipioFiltro,
-    };
-  }, [
-    state.overview,
-    state.comparativo,
-    state.historico,
-    state.escopo,
-    geocodeFiltroMapa,
-    filtros.geocode,
-    filtros.anoInicio,
-    filtros.anoFim,
-    nomeMunicipioFiltro,
-  ]);
+  const dadosGraficos = useMemo(
+    () =>
+      montarDadosGraficosElNino({
+        overview: state.overview,
+        historicoFallback: state.historico,
+        comparativoMensalFallback: state.comparativo?.mensal,
+        escopoNMunicipios: state.escopo?.municipios?.length ?? 0,
+        geocodeGraficos: geocodeFiltroMapa ?? filtros.geocode,
+        anoInicio: filtros.anoInicio,
+        anoFim: filtros.anoFim,
+        nomeMunicipio: nomeMunicipioFiltro,
+      }),
+    [
+      state.overview,
+      state.comparativo,
+      state.historico,
+      state.escopo,
+      geocodeFiltroMapa,
+      filtros.geocode,
+      filtros.anoInicio,
+      filtros.anoFim,
+      nomeMunicipioFiltro,
+    ],
+  );
 
   const graficosLoading =
     loading ||
@@ -526,6 +608,47 @@ export default function ElNinoAnalyticsPage() {
 
   const temHistoricoAnual = (dadosGraficos?.historicoAnual?.length ?? 0) > 0;
   const exibirHistoricoAnual = temHistoricoAnual || graficosLoading;
+
+  const remountTick =
+    state.overview?.atualizado_em ??
+    `${dadosGraficos?.serie?.length ?? 0}-${dadosGraficos?.mesFim ?? ''}`;
+
+  const serieConsorcioExibida = useMemo(
+    () =>
+      preferirSerieConsorcioRemontada(
+        state.overview,
+        state.serieConsorcio,
+        {
+          rotulo:
+            dadosGraficos?.nomeMunicipio ||
+            state.escopo?.rotulo ||
+            state.serieConsorcio?.rotulo_conjunto ||
+            'Escopo',
+          nMunicipios:
+            dadosGraficos?.nMunicipios ??
+            ((geocodeFiltroMapa ?? filtros.geocode) != null
+              ? 1
+              : state.escopo?.municipios?.length ?? 0),
+          geocode:
+            geocodeFiltroMapa != null
+              ? Number(geocodeFiltroMapa)
+              : filtros.geocode != null
+                ? Number(filtros.geocode)
+                : undefined,
+          contratoId: contratoEfetivo ?? 0,
+        },
+      ) as SerieConsorcioResponse | null,
+    [
+      state.overview,
+      state.serieConsorcio,
+      state.escopo,
+      dadosGraficos?.nomeMunicipio,
+      dadosGraficos?.nMunicipios,
+      geocodeFiltroMapa,
+      filtros.geocode,
+      contratoEfetivo,
+    ],
+  );
 
   const contratoVerbaAtivo = useMemo(
     () =>
@@ -573,27 +696,54 @@ export default function ElNinoAnalyticsPage() {
   ]);
 
   const municipioCasosFiltro = useMemo(() => {
-    if (geocodeFiltroMapa == null) return null;
-    const gc = Number(geocodeFiltroMapa);
+    const gc = geocodeFiltroMapa ?? filtros.geocode ?? null;
+    const totalMensal = acumularCasosConfirmados(
+      filtrarMensalPorGeocode(dadosGraficos?.mensalMun ?? [], gc),
+    );
+
     const lista =
       state.municipios?.ranking ?? state.municipios?.municipios ?? [];
-    const hit = lista.find((m: { geocode?: number }) => Number(m.geocode) === gc);
-    if (hit?.casos_notificados != null) return hit;
+    const hit =
+      gc != null
+        ? lista.find((m: { geocode?: number }) => Number(m.geocode) === Number(gc))
+        : lista.length === 1
+          ? lista[0]
+          : undefined;
 
     const dfMun = state.overview?.df_municipios ?? [];
-    const ov = dfMun.find((m: { geocode?: number }) => Number(m.geocode) === gc);
-    if (ov) {
-      return {
-        geocode: gc,
-        nome: ov.municipio ?? ov.nome,
-        municipio: ov.municipio,
-        casos_notificados: ov.casos_notificados ?? 0,
-        casos_estimados: ov.casos_estimados,
-      };
-    }
+    const ovHit =
+      gc != null
+        ? dfMun.find((m: { geocode?: number }) => Number(m.geocode) === Number(gc))
+        : dfMun.length === 1
+          ? dfMun[0]
+          : undefined;
 
-    return hit ?? null;
-  }, [geocodeFiltroMapa, state.municipios, state.overview]);
+    const totalFallback = Number(
+      hit?.casos_notificados ?? ovHit?.casos_notificados ?? 0,
+    );
+    const total = totalMensal > 0 ? totalMensal : totalFallback;
+
+    if (total <= 0 && !hit && !ovHit) return null;
+
+    return {
+      geocode: Number(gc ?? hit?.geocode ?? ovHit?.geocode ?? 0),
+      nome:
+        hit?.nome ??
+        ovHit?.municipio ??
+        ovHit?.nome ??
+        dadosGraficos?.nomeMunicipio,
+      municipio: hit?.municipio ?? ovHit?.municipio,
+      casos_notificados: total,
+      casos_estimados: hit?.casos_estimados ?? ovHit?.casos_estimados,
+    };
+  }, [
+    geocodeFiltroMapa,
+    filtros.geocode,
+    dadosGraficos?.mensalMun,
+    dadosGraficos?.nomeMunicipio,
+    state.municipios,
+    state.overview,
+  ]);
 
   /** Exige sessão válida antes de qualquer chamada ao proxy (JWT obrigatório). */
   useEffect(() => {
@@ -605,10 +755,62 @@ export default function ElNinoAnalyticsPage() {
 
   /** Restaura filtros do sessionStorage após hidratação (evita mismatch SSR/client). */
   useEffect(() => {
-    const salvos = carregarFiltrosSalvos();
+    if (!isHydrated) return;
+    const salvos = carregarFiltrosSalvos(user?.id);
     setFiltros(salvos);
     setGeocodeFiltroMapa(salvos.geocode);
-  }, []);
+  }, [isHydrated, user?.id]);
+
+  /**
+   * URL (?contratoId=42 / ?geocode=…) tem prioridade — ex.: voltar do mapa AMVAP.
+   * Persistimos no sessionStorage para o filtro territorial continuar ativo.
+   */
+  useEffect(() => {
+    if (!router.isReady) return;
+    const parsed = parseMapaProjecaoQuery(router.query);
+    if (parsed.visao === 'todos') {
+      setGeocodeFiltroMapa(null);
+      setFiltros((f) => ({
+        ...f,
+        consorcioId: null,
+        ursId: null,
+        geocode: null,
+        geocodes: null,
+      }));
+      try {
+        window.sessionStorage.removeItem(chaveFiltrosStorage(user?.id));
+        window.sessionStorage.removeItem(FILTROS_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    if (parsed.contratoId == null && parsed.geocode == null) return;
+
+    setFiltros((f) => {
+      const next: FiltrosElNino = {
+        ...f,
+        consorcioId: parsed.contratoId ?? f.consorcioId,
+        geocode: parsed.geocode ?? f.geocode,
+        ursId: null,
+      };
+      persistirFiltros(next, user?.id);
+      return next;
+    });
+    if (parsed.geocode != null) {
+      setGeocodeFiltroMapa(parsed.geocode);
+    }
+    // Query keys explícitas — evita reload a cada mudança irrelevante de router.query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    router.isReady,
+    router.query.contratoId,
+    router.query.contrato_id,
+    router.query.geocode,
+    router.query.visao,
+    user?.id,
+  ]);
 
   /** Recarrega projeção do município de verba direta ao aplicar o filtro. */
   useEffect(() => {
@@ -645,6 +847,7 @@ export default function ElNinoAnalyticsPage() {
     modoMapaBairro,
     geocodeFiltroMapa,
     contratoVerbaAtivo,
+    contratoEfetivo,
     filtros.consorcioId,
   ]);
 
@@ -656,14 +859,40 @@ export default function ElNinoAnalyticsPage() {
       .getEscopo()
       .then((escopo) => {
         setState((s) => ({ ...s, escopo }));
-        if (!escopo.isGlobal && escopo.geocodes?.length) {
-          const g = escopo.geocodes[0];
-          setGeocodeFiltroMapa((atual) => atual ?? g);
-          setFiltros((f) => ({
-            ...f,
-            geocode: f.geocode ?? g,
-            geocodes: f.geocodes?.length ? f.geocodes : escopo.geocodes,
-          }));
+        // Global: não força gerencial se já houver filtro (URL, sessionStorage ou UI).
+        if (escopo.isGlobal) {
+          setFiltros((f) => {
+            const temFoco =
+              f.consorcioId != null ||
+              f.ursId != null ||
+              f.geocode != null ||
+              (f.geocodes?.length ?? 0) > 0;
+            if (temFoco) return f;
+            return {
+              ...f,
+              consorcioId: null,
+              ursId: null,
+              geocode: null,
+              geocodes: null,
+            };
+          });
+        } else if (escopo.geocodes?.length) {
+          const carteiraGrande =
+            escopo.geocodes.length > MAX_GEOCODES_NA_QUERY;
+          // Sempre clamp ao JWT — evita 403 com filtro de outro usuário/município.
+          setFiltros((f) => {
+            const limpo = sanitizarFiltrosNoEscopo(
+              carteiraGrande ? { ...f, geocodes: null } : f,
+              escopo,
+            );
+            persistirFiltros(limpo, user?.id);
+            return limpo;
+          });
+          setGeocodeFiltroMapa((atual) => {
+            const permitidos = new Set(escopo.geocodes.map(Number));
+            if (atual != null && permitidos.has(Number(atual))) return atual;
+            return carteiraGrande ? null : Number(escopo.geocodes[0]);
+          });
         }
       })
       .catch(() => {
@@ -681,19 +910,25 @@ export default function ElNinoAnalyticsPage() {
       .catch(() => {
         /* silencioso */
       });
-  }, [isHydrated, isAuthenticated]);
+  }, [isHydrated, isAuthenticated, user?.id]);
 
   /**
    * Não-global: fixa o consórcio/contrato do escopo do usuário.
-   * Evita cair em "Todos — visão gerencial" com consorcioId null.
+   * Carteira multi-contrato: escolhe o consórcio com mais mun no escopo.
    */
   useEffect(() => {
     const escopo = state.escopo;
     const consorcios = state.consorcios;
     if (!escopo || escopo.isGlobal || !consorcios.length) return;
 
+    const carteiraGrande =
+      (escopo.geocodes?.length ?? 0) > MAX_GEOCODES_NA_QUERY;
+
     setFiltros((f) => {
-      const geocodeAtual = f.geocode ?? escopo.geocodes?.[0] ?? null;
+      const limpo = sanitizarFiltrosNoEscopo(f, escopo);
+      const geocodeAtual =
+        limpo.geocode ??
+        (carteiraGrande ? null : escopo.geocodes?.[0] ?? null);
       const consorcioValido =
         f.consorcioId != null &&
         consorcios.some((c) => Number(c.id) === Number(f.consorcioId));
@@ -703,31 +938,54 @@ export default function ElNinoAnalyticsPage() {
         if (consorcios.length === 1) {
           consorcioId = Number(consorcios[0].id);
         } else if (geocodeAtual != null) {
-          consorcioId =
-            resolverContratoEfetivo(null, geocodeAtual, consorcios) ??
-            Number(consorcios[0].id);
+          consorcioId = resolverContratoEfetivo(
+            null,
+            geocodeAtual,
+            consorcios,
+          );
         } else {
-          consorcioId = Number(consorcios[0].id);
+          consorcioId = maiorConsorcioDoEscopo(escopo.geocodes, consorcios);
         }
       }
 
-      const contrato = consorcios.find((c) => Number(c.id) === Number(consorcioId));
+      const contrato = consorcios.find(
+        (c) => Number(c.id) === Number(consorcioId),
+      );
       const geocode =
         geocodeAtual ??
-        (escopo.tipo === 'municipio'
+        (escopo.tipo === 'municipio' && !carteiraGrande
           ? escopo.geocodes?.[0] ?? null
           : contrato?.municipios?.length === 1
             ? Number(contrato.municipios[0].geocode)
             : null);
 
-      const geocodes =
-        f.geocodes?.length
-          ? f.geocodes
-          : escopo.tipo === 'municipio'
-            ? escopo.geocodes
-            : contrato?.municipios?.map((m) => Number(m.geocode)) ??
-              escopo.geocodes ??
-              null;
+      const geocodesDoContrato =
+        contrato?.municipios?.map((m: { geocode: number }) =>
+          Number(m.geocode),
+        ) ?? null;
+      const geocodesNoEscopo = geocodesDoContrato?.filter((g) =>
+        (escopo.geocodes ?? []).includes(g),
+      );
+      const geocodesEscopoPequeno =
+        (escopo.geocodes?.length ?? 0) > 0 &&
+        (escopo.geocodes?.length ?? 0) <= MAX_GEOCODES_NA_QUERY
+          ? escopo.geocodes
+          : null;
+      let geocodes: number[] | null = limpo.geocodes?.length
+        ? limpo.geocodes
+        : null;
+      if (!geocodes) {
+        if (escopo.tipo === 'municipio') {
+          geocodes = geocodesEscopoPequeno;
+        } else if (
+          geocodesNoEscopo?.length &&
+          geocodesNoEscopo.length <= MAX_GEOCODES_NA_QUERY
+        ) {
+          geocodes = geocodesNoEscopo;
+        } else {
+          geocodes = geocodesEscopoPequeno;
+        }
+      }
 
       if (
         f.consorcioId === consorcioId &&
@@ -747,20 +1005,26 @@ export default function ElNinoAnalyticsPage() {
     });
 
     setGeocodeFiltroMapa((atual) => {
-      if (atual != null) return atual;
+      const permitidos = new Set((escopo.geocodes ?? []).map(Number));
+      if (atual != null && permitidos.has(Number(atual))) return atual;
+      if (carteiraGrande) return null;
       return escopo.geocodes?.[0] ?? null;
     });
   }, [state.escopo, state.consorcios]);
 
   // ─── Carregamento principal ───────────────────────────────────────────────
+  // Escopo JWT já veio no boot. Aqui: overview libera a 1ª pintura; KPIs/mapa/
+  // série sobem em paralelo (sem waterfall gerencial de 3 ondas).
   const carregarDados = useCallback(async () => {
+    if (!state.escopo) return;
+
     const seq = ++cargaSeqRef.current;
     const params = paramsApi;
-    const gerencial = 'visao' in params && params.visao === 'todos';
     const aindaValido = () => cargaSeqRef.current === seq;
 
     setErro(null);
     setLoading(true);
+    setLoadingSecundario(true);
 
     const aplicarSecundario = (
       partial: Partial<PageState> & {
@@ -775,154 +1039,111 @@ export default function ElNinoAnalyticsPage() {
       }));
     };
 
+    const hidratarDoOverview = (overview: any) => {
+      const alertas = Array.isArray(overview?.alertas)
+        ? (overview.alertas as AlertaPreditivo[])
+        : [];
+      const comparativo = overview?.elnino ?? null;
+      const historico =
+        overview?.df_historico_ponderado?.length
+          ? overview.df_historico_ponderado
+          : overview?.df_historico ?? [];
+
+      let municipios: PageState['municipios'] = null;
+      const mapaDf = overview?.mapa_df;
+      if (Array.isArray(mapaDf) && mapaDf.length) {
+        const popMap = new Map<number, number>(
+          (overview?.resumo_escopo?.populacoes ?? []).map(
+            (p: { geocode: number; populacao: number }) => [
+              Number(p.geocode),
+              Number(p.populacao) || 0,
+            ],
+          ),
+        );
+        const ranking = mapaDf.map((m: Record<string, unknown>) => {
+          const geocode = Number(m.geocode);
+          const populacao = popMap.get(geocode) ?? 0;
+          const casos =
+            Number(m.casos_notificados) > 0
+              ? Number(m.casos_notificados)
+              : Number(m.casos_estimados) || 0;
+          const incidencia_100k =
+            populacao > 0
+              ? Math.round((casos / populacao) * 100_000 * 10) / 10
+              : null;
+          return { ...m, populacao, incidencia_100k };
+        });
+        municipios = {
+          municipios: overview?.municipios_ibge ?? [],
+          ranking,
+        };
+      }
+
+      return { alertas, comparativo, historico, municipios };
+    };
+
     try {
-      if (gerencial) {
-        // Visão gerencial: overview primeiro (payload pesado agregado), KPIs em paralelo.
-        const [escopoRes, overviewRes] = await Promise.allSettled([
-          elNinoApi.getEscopo(params),
-          elNinoApi.getOverview(params),
-        ]);
+      // Dispara tudo junto — overview só decide a 1ª pintura.
+      const overviewP = elNinoApi.getOverview(params);
+      const kpisP = elNinoApi.getKpis(params);
+      const mapaP = elNinoApi.getMapaProjecao(params);
+      const serieP = elNinoApi.getSerieConsorcio(params);
 
-        if (!aindaValido()) return;
-
-        if (
-          escopoRes.status === 'rejected' &&
-          overviewRes.status === 'rejected'
-        ) {
-          throw overviewRes.reason || escopoRes.reason;
-        }
-
-        const escopo =
-          escopoRes.status === 'fulfilled' ? escopoRes.value : null;
-        const overview =
-          overviewRes.status === 'fulfilled' ? overviewRes.value : null;
-
-        setState((s) => ({
-          ...s,
-          escopo,
-          overview,
-          causaDengue: overview?.causa_dengue ?? null,
-        }));
-        setLoading(false);
-        setLoadingSecundario(true);
-
-        elNinoApi
-          .getKpis(params)
-          .then((kpis) => {
-            if (!aindaValido()) return;
-            setState((s) => ({ ...s, kpis }));
-          })
-          .catch(() => {
-            /* KPIs opcionais na 1ª pintura */
-          });
-
-        const [alertasResp, comparativoResp, munResp] =
-          await Promise.allSettled([
-            elNinoApi.getAlertas(params),
-            elNinoApi.getComparativo(params),
-            elNinoApi.getMunicipios(params),
-          ]);
-
-        if (!aindaValido()) return;
-
-        aplicarSecundario({
-          alertas:
-            alertasResp.status === 'fulfilled'
-              ? (alertasResp.value.alertas ?? [])
-              : [],
-          comparativo:
-            comparativoResp.status === 'fulfilled'
-              ? comparativoResp.value
-              : null,
-          municipios: munResp.status === 'fulfilled' ? munResp.value : null,
-          historico:
-            overview?.df_historico_ponderado?.length
-              ? overview.df_historico_ponderado
-              : overview?.df_historico ?? [],
-        });
-
-        const [serieResp, mapaResp] = await Promise.allSettled([
-          elNinoApi.getSerieConsorcio(params),
-          elNinoApi.getMapaProjecao(params),
-        ]);
-
-        if (!aindaValido()) return;
-
-        aplicarSecundario({
-          serieConsorcio:
-            serieResp.status === 'fulfilled' ? serieResp.value : null,
-          mapaProjecao:
-            mapaResp.status === 'fulfilled' ? mapaResp.value : null,
-        });
+      const overviewRes = await Promise.allSettled([overviewP]);
+      if (!aindaValido()) {
+        // Outra carga assumiu o controle — não deixa loading preso aqui.
         return;
       }
 
-      const [escopoRes, kpisRes, overviewRes] = await Promise.allSettled([
-        elNinoApi.getEscopo(params),
-        elNinoApi.getKpis(params),
-        elNinoApi.getOverview(params),
-      ]);
-
-      if (!aindaValido()) return;
-
-      if (
-        escopoRes.status === 'rejected' &&
-        overviewRes.status === 'rejected'
-      ) {
-        const err = overviewRes.reason || escopoRes.reason;
-        throw err;
+      if (overviewRes[0]!.status === 'rejected') {
+        throw overviewRes[0]!.reason;
       }
 
-      const escopo =
-        escopoRes.status === 'fulfilled' ? escopoRes.value : null;
-      const kpis = kpisRes.status === 'fulfilled' ? kpisRes.value : null;
-      const overview =
-        overviewRes.status === 'fulfilled' ? overviewRes.value : null;
+      const overview = overviewRes[0]!.value;
+      const hidratado = hidratarDoOverview(overview);
 
       setState((s) => ({
         ...s,
-        escopo,
-        kpis,
         overview,
         causaDengue: overview?.causa_dengue ?? null,
+        alertas: hidratado.alertas.length ? hidratado.alertas : s.alertas,
+        comparativo: hidratado.comparativo ?? s.comparativo,
+        municipios: hidratado.municipios ?? s.municipios,
+        historico: hidratado.historico,
       }));
       setLoading(false);
 
-      setLoadingSecundario(true);
-      const [
-        alertasResp,
-        serieResp,
-        comparativoResp,
-        munResp,
-        mapaResp,
-      ] = await Promise.allSettled([
-        elNinoApi.getAlertas(params),
-        elNinoApi.getSerieConsorcio(params),
-        elNinoApi.getComparativo(params),
-        elNinoApi.getMunicipios(params),
-        elNinoApi.getMapaProjecao(params),
-      ]);
+      // KPIs assim que chegarem (não esperam o mapa pesado).
+      void kpisP
+        .then((kpis) => {
+          if (!aindaValido()) return;
+          const geocodeKpi =
+            params.geocode != null ? Number(params.geocode) : null;
+          setState((s) => ({
+            ...s,
+            kpis,
+            ...(geocodeKpi != null && Number.isFinite(geocodeKpi)
+              ? {
+                  kpisPorMunicipio: {
+                    ...s.kpisPorMunicipio,
+                    [geocodeKpi]: kpis,
+                  },
+                }
+              : {}),
+          }));
+        })
+        .catch(() => {
+          /* KPIs opcionais na 1ª pintura */
+        });
 
+      const [mapaRes, serieRes] = await Promise.allSettled([mapaP, serieP]);
       if (!aindaValido()) return;
 
       aplicarSecundario({
-        alertas:
-          alertasResp.status === 'fulfilled'
-            ? (alertasResp.value.alertas ?? [])
-            : [],
-        serieConsorcio:
-          serieResp.status === 'fulfilled' ? serieResp.value : null,
-        comparativo:
-          comparativoResp.status === 'fulfilled'
-            ? comparativoResp.value
-            : null,
-        municipios: munResp.status === 'fulfilled' ? munResp.value : null,
         mapaProjecao:
-          mapaResp.status === 'fulfilled' ? mapaResp.value : null,
-        historico:
-          overview?.df_historico_ponderado?.length
-            ? overview.df_historico_ponderado
-            : overview?.df_historico ?? [],
+          mapaRes.status === 'fulfilled' ? mapaRes.value : null,
+        serieConsorcio:
+          serieRes.status === 'fulfilled' ? serieRes.value : null,
       });
     } catch (err: any) {
       if (!aindaValido()) return;
@@ -934,14 +1155,22 @@ export default function ElNinoAnalyticsPage() {
       setErro(msg);
       setLoading(false);
     } finally {
-      if (aindaValido()) setLoadingSecundario(false);
+      if (aindaValido()) {
+        setLoading(false);
+        setLoadingSecundario(false);
+      }
     }
+    // Escopo entra via early-return; o efeito abaixo dispara quando escopoCarregado muda.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsApi]);
 
+  /** Escopo JWT já resolvido — dispara overview/mapa (gerencial usa visao=todos). */
+  const escopoCarregado = state.escopo != null;
+
   useEffect(() => {
-    if (!isHydrated || !isAuthenticated) return;
+    if (!isHydrated || !isAuthenticated || !escopoCarregado) return;
     carregarDados();
-  }, [carregarDados, isHydrated, isAuthenticated]);
+  }, [carregarDados, isHydrated, isAuthenticated, escopoCarregado]);
 
   /**
    * Pré-carrega KPIs por município em paralelo após o escopo carregar.
@@ -949,7 +1178,7 @@ export default function ElNinoAnalyticsPage() {
    */
   useEffect(() => {
     if (!isHydrated || !isAuthenticated) return;
-    if (!state.escopo || modoVisaoGerencialTodos || geocodeFiltroMapa == null) return;
+    if (!state.escopo || modoVisaoGerencialTodos) return;
     const municipiosAlvo = municipiosCarrossel;
     if (municipiosAlvo.length <= 1) return;
 
@@ -959,7 +1188,10 @@ export default function ElNinoAnalyticsPage() {
       const resultados = await Promise.allSettled(
         municipiosAlvo.map((m) =>
           elNinoApi.getKpis({
-            contratoId: contratoEfetivo ?? undefined,
+            contratoId:
+              resolverContratoEfetivo(null, m.geocode, state.consorcios) ??
+              contratoEfetivo ??
+              undefined,
             geocode: m.geocode,
             ano_inicio: filtros.anoInicio,
             ano_fim: filtros.anoFim,
@@ -980,14 +1212,14 @@ export default function ElNinoAnalyticsPage() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.escopo, cargaKey]);
+  }, [state.escopo, cargaKey, carrosselKpisAtivo]);
 
   /** Pré-carrega clima atual (Open-Meteo) para os municípios do carrossel. */
   useEffect(() => {
     if (!isHydrated || !isAuthenticated) return;
-    if (!state.escopo || modoVisaoGerencialTodos || geocodeFiltroMapa == null) return;
+    if (!state.escopo || modoVisaoGerencialTodos) return;
     const alvo = municipiosCarrossel;
-    if (!alvo.length) return;
+    if (alvo.length <= 1) return;
 
     let cancelado = false;
     setState((s) => ({ ...s, climaPorMunicipio: {} }));
@@ -997,7 +1229,10 @@ export default function ElNinoAnalyticsPage() {
       const resultados = await Promise.allSettled(
         alvo.map((m) =>
           elNinoApi.getClima({
-            contratoId: contratoEfetivo ?? undefined,
+            contratoId:
+              resolverContratoEfetivo(null, m.geocode, state.consorcios) ??
+              contratoEfetivo ??
+              undefined,
             geocode: m.geocode,
             ano: 'previsao',
           }),
@@ -1018,12 +1253,26 @@ export default function ElNinoAnalyticsPage() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.escopo, cargaKey]);
+  }, [state.escopo, cargaKey, carrosselKpisAtivo, state.overview?.atualizado_em]);
+
+  /** Inicia o carrossel no 1º município do escopo (sem alterar o filtro do mapa). */
+  useEffect(() => {
+    if (!carrosselKpisAtivo) return;
+    if (filtros.geocode != null) return;
+    const ordenados = [...municipiosCarrossel].sort((a, b) =>
+      a.nome.localeCompare(b.nome, 'pt-BR'),
+    );
+    const primeiro = ordenados[0]?.geocode;
+    if (primeiro == null) return;
+    setFiltros((f) =>
+      f.geocode == null ? { ...f, geocode: primeiro } : f,
+    );
+  }, [carrosselKpisAtivo, municipiosCarrossel, filtros.geocode]);
 
   /** Clima sob demanda quando o carrossel aponta para município ainda não em cache. */
   useEffect(() => {
     if (!isHydrated || !isAuthenticated) return;
-    const geocode = filtros.geocode;
+    const geocode = filtros.geocode ?? geocodeFiltroMapa;
     if (geocode == null || state.climaPorMunicipio[geocode]) return;
 
     let cancelado = false;
@@ -1052,10 +1301,15 @@ export default function ElNinoAnalyticsPage() {
       cancelado = true;
     };
   }, [
+    isHydrated,
+    isAuthenticated,
+    contratoEfetivo,
     filtros.geocode,
+    geocodeFiltroMapa,
     filtros.consorcioId,
     cargaKey,
     state.climaPorMunicipio,
+    state.overview?.atualizado_em,
   ]);
 
   /** Busca sob demanda quando o carrossel aponta para um município ainda não em cache. */
@@ -1087,6 +1341,9 @@ export default function ElNinoAnalyticsPage() {
       cancelado = true;
     };
   }, [
+    isHydrated,
+    isAuthenticated,
+    contratoEfetivo,
     filtros.geocode,
     filtros.consorcioId,
     filtros.anoInicio,
@@ -1120,27 +1377,52 @@ export default function ElNinoAnalyticsPage() {
             </div>
           )}
 
-          {/* Header com legenda + links */}
+          {/* Contexto educativo */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.04 }}
+          >
+            <ElNinoCausaDengue causa={state.causaDengue} loading={loading} />
+          </motion.div>
+
+          {/* Resumo / KPIs */}
+          <SecaoAnalytics
+            id="secao-indicadores"
+            titulo="Resumo"
+            descricao="Indicadores do escopo filtrado e relação entre clima, El Niño e dengue."
+          >
+            <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                key={filtros.geocode ?? 'agregado'}
+              >
+                <ElNinoKpiCards
+                  kpis={kpisExibidos?.kpis ?? []}
+                  loading={loading || loadingKpisMunicipio}
+                />
+              </motion.div>
+            </div>
+          </SecaoAnalytics>
+
+          {/* Filtros — acima da visão municipal */}
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <ElNinoHeaderLegenda
-              subtitulo={subtitulo}
-              mapaQuery={{
-                contratoId: contratoEfetivo,
-                geocode: geocodeFiltroMapa,
-              }}
-            />
-          </motion.div>
-
-          {/* Filtros globais */}
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
             <ElNinoFiltrosTerritorial
+              mesclarHeader
+              subtitulo={subtitulo}
+              mapaQuery={
+                modoVisaoGerencialTodos
+                  ? { visao: 'todos' }
+                  : {
+                      contratoId: contratoEfetivo,
+                      geocode: geocodeFiltroMapa,
+                    }
+              }
               escopo={state.escopo}
               consorcios={state.consorcios}
               urs={state.urs}
@@ -1169,16 +1451,7 @@ export default function ElNinoAnalyticsPage() {
                 }
                 setFiltros(next);
                 setGeocodeFiltroMapa(next.geocode);
-                if (typeof window !== 'undefined') {
-                  try {
-                    window.sessionStorage.setItem(
-                      FILTROS_STORAGE_KEY,
-                      JSON.stringify(next),
-                    );
-                  } catch {
-                    /* sessionStorage indisponível — ignora */
-                  }
-                }
+                persistirFiltros(next, user?.id);
               }}
               loading={loading}
             />
@@ -1193,10 +1466,8 @@ export default function ElNinoAnalyticsPage() {
             </div>
           )}
 
-          {/* Carrossel — apenas na visão municipal (município específico aplicado) */}
-          {state.escopo &&
-            geocodeFiltroMapa != null &&
-            municipiosCarrossel.length > 1 && (
+          {/* Carrossel de KPIs — consórcio / gestor / admin com vários municípios */}
+          {state.escopo && carrosselKpisAtivo && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1205,82 +1476,72 @@ export default function ElNinoAnalyticsPage() {
               <ElNinoCarrosselMunicipios
                 municipios={municipiosCarrossel}
                 geocodeSelecionado={filtros.geocode}
+                intervaloMs={5000}
                 onGeocodeMudou={(gc) =>
                   setFiltros((s) => ({ ...s, geocode: gc }))
                 }
               />
             </motion.div>
           )}
-
           {/* Navegação rápida entre blocos */}
           <NavSecoesPagina incluirRanking={exibirRankingMunicipios} />
 
-          {/* 1 — Resumo executivo */}
-          <SecaoAnalytics
-            id="secao-indicadores"
-            titulo="Resumo"
-            descricao="Indicadores do escopo filtrado e relação entre clima, El Niño e dengue."
-          >
-            <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                key={filtros.geocode ?? 'agregado'}
-              >
-                <ElNinoKpiCards
-                  kpis={kpisExibidos?.kpis ?? []}
-                  loading={loading || loadingKpisMunicipio}
-                />
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.12 }}
-              >
-                <ElNinoCausaDengue causa={state.causaDengue} loading={loading} />
-              </motion.div>
-            </div>
-          </SecaoAnalytics>
-
-          {/* 2 — Território: mapa em destaque + alertas */}
+          {/* Território: mapa / visão municipal + alertas */}
           <SecaoAnalytics
             id="secao-territorio"
             titulo="Território e alertas"
-            descricao="Mapa de risco projetado e alertas que pedem ação no escopo selecionado."
+            descricao="Risco projetado no escopo e alertas que pedem ação — confirmados e projeção ficam separados."
           >
             <motion.div
-              className="grid grid-cols-1 xl:grid-cols-5 gap-4 xl:items-start"
+              className="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-2 sm:p-2.5 shadow-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
             >
-              <div className="w-full xl:col-span-3 min-w-0">
-                <ElNinoMapaProjecao
-                  data={mapaExibido}
-                  loading={
-                    (loadingSecundario && !state.mapaProjecao) || loadingMapaVerba
-                  }
-                  geocodeFiltro={geocodeFiltroMapa}
-                  consorcioId={filtros.consorcioId}
-                  consorcios={state.consorcios}
-                  municipioCasos={municipioCasosFiltro}
-                />
-              </div>
-              <div className="relative w-full xl:col-span-2 min-w-0 bg-white rounded-xl border border-gray-100 p-4 xl:sticky xl:top-28 xl:max-h-[min(36rem,calc(100vh-8rem))] overflow-y-auto overscroll-contain">
-                <ElNinoGuiaGrafico chave="alertas" />
-                <header className="mb-3 pr-8">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    Alertas preditivos
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    INMET · Chuva · Previsão · Infodengue · Controle vetorial
-                  </p>
-                </header>
-                <ElNinoAlertas
-                  alertas={state.alertas}
-                  loading={loadingSecundario && !state.alertas.length}
-                />
+              <div className="grid grid-cols-1 xl:grid-cols-5 gap-2.5 xl:items-start">
+                <div className="w-full xl:col-span-3 min-w-0">
+                  <ElNinoMapaProjecao
+                    key={`painel-${remountTick}-${geocodeFiltroMapa ?? 'escopo'}`}
+                    data={mapaExibido}
+                    loading={
+                      (loadingSecundario && !state.mapaProjecao) ||
+                      loadingMapaVerba
+                    }
+                    geocodeFiltro={geocodeFiltroMapa}
+                    consorcioId={filtros.consorcioId}
+                    consorcios={state.consorcios}
+                    municipioCasos={municipioCasosFiltro}
+                  />
+                </div>
+
+                <aside
+                  aria-labelledby="el-nino-alertas-titulo"
+                  className="relative w-full xl:col-span-2 min-w-0 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col max-h-[min(28rem,70vh)] xl:sticky xl:top-28 overflow-hidden"
+                >
+                  <ElNinoGuiaGrafico chave="alertas" />
+                  <header className="shrink-0 px-3 py-2.5 border-b border-slate-100 bg-slate-50/80 pr-11">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3
+                        id="el-nino-alertas-titulo"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        Alertas preditivos
+                      </h3>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums">
+                        {state.alertas.length}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 truncate">
+                      INMET · Chuva · Calor · El Niño · Infodengue
+                    </p>
+                  </header>
+                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2.5">
+                    <ElNinoAlertas
+                      alertas={state.alertas}
+                      loading={loadingSecundario && !state.alertas.length}
+                    />
+                  </div>
+                </aside>
               </div>
             </motion.div>
           </SecaoAnalytics>
@@ -1326,23 +1587,25 @@ export default function ElNinoAnalyticsPage() {
               transition={{ delay: 0.19 }}
             >
               <ElNinoSerieConsorcio
-                data={state.serieConsorcio}
-                loading={loadingSecundario && !state.serieConsorcio}
+                key={`serie-${remountTick}`}
+                data={serieConsorcioExibida}
+                loading={loadingSecundario && !serieConsorcioExibida}
               />
 
               <div className="space-y-4">
                 <ElNinoChuvaConsorcio
-                  data={state.serieConsorcio}
+                  key={`chuva-${remountTick}`}
+                  data={serieConsorcioExibida}
                   serieHistorica={dadosGraficos?.serie}
                   anoInicio={filtros.anoInicio}
                   anoFim={filtros.anoFim}
-                  loading={loadingSecundario && !state.serieConsorcio}
+                  loading={loadingSecundario && !serieConsorcioExibida}
                 />
-                {(filtros.geocode != null ||
+                {(geocodeClima != null ||
                   loadingClimaMunicipio ||
                   climaExibido) && (
                   <ElNinoPrevisaoClima
-                    key={filtros.geocode ?? 'sem-geocode'}
+                    key={`clima-${geocodeClima ?? 'sem-geocode'}-${remountTick}`}
                     clima={climaExibido}
                     loading={loadingClimaMunicipio}
                   />
@@ -1365,6 +1628,7 @@ export default function ElNinoAnalyticsPage() {
             >
               {exibirHistoricoAnual ? (
                 <ElNinoHistoricoAnual
+                  key={`hist-${remountTick}`}
                   historico={dadosGraficos?.historicoAnual}
                   oniMensal={dadosGraficos?.oniMensal}
                   serie={dadosGraficos?.serie}
@@ -1374,11 +1638,13 @@ export default function ElNinoAnalyticsPage() {
 
               <div className="space-y-4">
                 <ElNinoComparativoMensal
+                  key={`comp-${remountTick}`}
                   serie={dadosGraficos?.serie}
                   oniMensal={dadosGraficos?.oniMensal}
                   {...graficosProps}
                 />
                 <ElNinoSerieSazonal
+                  key={`saz-${remountTick}`}
                   mensalMun={dadosGraficos?.mensalMun}
                   serieFallback={dadosGraficos?.serie}
                   {...graficosProps}
@@ -1400,14 +1666,24 @@ export default function ElNinoAnalyticsPage() {
               transition={{ delay: 0.21 }}
             >
               <ElNinoPerfilMensal
-                mensalMun={dadosGraficos?.mensalMun}
-                comparativoMensal={dadosGraficos?.comparativoMensal}
-                {...graficosProps}
+                key={`perfil-${remountTick}`}
+                mensalMun={
+                  dadosGraficos?.mensalMunCompleto ?? dadosGraficos?.mensalMun
+                }
+                nMunicipios={graficosProps.nMunicipios}
+                nomeMunicipio={graficosProps.nomeMunicipio}
+                loading={graficosProps.loading}
               />
               <ElNinoPosPicoOni
-                serie={dadosGraficos?.serie}
-                oniMensal={dadosGraficos?.oniMensal}
-                {...graficosProps}
+                key={`pospico-${remountTick}`}
+                serie={dadosGraficos?.serieCompleta ?? dadosGraficos?.serie}
+                oniMensal={
+                  dadosGraficos?.oniCompleto ?? dadosGraficos?.oniMensal
+                }
+                nMunicipios={graficosProps.nMunicipios}
+                nomeMunicipio={graficosProps.nomeMunicipio}
+                loading={graficosProps.loading}
+                mesFim={12}
               />
             </motion.div>
           </SecaoAnalytics>

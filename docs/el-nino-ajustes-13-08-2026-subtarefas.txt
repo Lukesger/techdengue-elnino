@@ -1,0 +1,213 @@
+================================================================================
+El Niño Analytics — ajustes UX/clareza e ONI (13/08/2026)
+Projeto sugerido: PT — Plataforma TechDengue
+Tipo pai sugerido: Melhoria (ou Tarefa)
+Branches: fix/el-nino-card-home-gestao (FE) | feat/elnino-read-all-perfis (BE)
+================================================================================
+
+PACOTE PAI
+----------
+Título:
+  El Niño Analytics — ajustes UX/clareza e ONI (13/08/2026)
+
+Natureza: FE + BE (pacote misto)
+
+Descrição:
+  Pacote de ajustes do dashboard e do mapa de projeção El Niño, a partir do
+  feedback do PDF "Dúvidas e sugestões El ninho" e refinamentos de UI/UX.
+  Inclui redesign de KPIs, clarificação da métrica de correlação, reorganização
+  de layout, atualização semanal do ONI, melhorias no mapa de projeção
+  (header, cards, legenda gerencial, hectares), correção do reload periódico
+  em dev (cache fora de src/) e nome de bairro no shape unificado.
+
+
+LEGENDA DE NATUREZA
+-------------------
+  FE     = Frontend (techdengue_frontend)
+  BE     = Backend (techdenguebackend)
+  FE+BE  = Frontend e Backend
+  OPS    = Operação/infra local (script, cron Windows, agendamento)
+  DX     = Developer experience / confiabilidade em desenvolvimento
+
+
+SUBTAREFAS
+----------
+
+1) Redesign dos 5 cards KPI (Resumo)
+Natureza: FE
+Descrição:
+  Reformular o design dos 5 cards de KPI do bloco Resumo (`ElNinoKpiCards`),
+  alinhando tipografia, hierarquia visual, espaçamento e linguagem ao restante
+  do analytics. Objetivo: leitura mais clara das métricas sem visual genérico
+  de dashboard sobrecarregado.
+
+
+2) Guia "!" da correlação ONI × casos
+Natureza: FE
+Descrição:
+  Adicionar botão "!" (`ElNinoGuiaGrafico`) no card de correlação com guia
+  `kpi-correlacao-oni` em linguagem simples (não técnica).
+  Esclarecer que a métrica NÃO é "chance de casos por pessoa".
+  Comportamento confirmado: r = Pearson ONI×casos, lag 0, base histórica
+  completa — não segue o filtro de período.
+  Painel do "!" via portal + `position: fixed` para não ficar sob a nav sticky.
+
+
+3) Remover aside de correlação dos filtros
+Natureza: FE
+Descrição:
+  Remover o bloco/aside de correlação embutido em `ElNinoFiltrosTerritorial`,
+  evitando duplicidade com o card de correlação do Resumo e reduzindo ruído
+  na área de filtros.
+
+
+4) Layout: Resumo (KPIs) acima dos Filtros
+Natureza: FE
+Descrição:
+  Inverter a ordem da página `el-nino-analytics/index.tsx` para:
+  Resumo (KPIs) → Filtros → demais seções.
+  Objetivo: o usuário ver o contexto numérico antes de interagir com filtros.
+
+
+5) Perfil mensal com período histórico fixo
+Natureza: FE
+Descrição:
+  Ajustar `ElNinoPerfilMensal` para usar período histórico fixo (mesmo padrão
+  do pós-pico ONI), consumindo `mensalMunCompleto`, em vez de seguir o recorte
+  temporal do filtro global quando isso distorce a leitura do perfil.
+
+
+6) KPI ONI com mês/ano do último dado NOAA
+Natureza: BE
+Descrição:
+  Atualizar subtítulo do KPI ONI no backend/controller para exibir algo como:
+  "Dados de Jun/YYYY · último ONI NOAA disponível".
+  Deixa explícita a temporalidade do valor exibido (ex.: jun/2026).
+
+
+7) Script + agendamento semanal de atualização do ONI
+Natureza: BE + OPS
+Descrição:
+  Criar/usar script `scripts/consultar-oni-atual.js` (`npm run el-nino:oni-atual`)
+  para obter mês/valor atual do ONI.
+  Agendar execução semanal:
+  - Nest cron `el-nino-oni-semanal` (ex.: segunda 05:00) — BE
+  - tarefa Windows `TechDengue-ONI-Semanal` (install script) — OPS
+  Persistir snapshot em `data/el-nino/oni_atual.json`.
+
+
+8) Mapa: header limpo (voltar/legenda)
+Natureza: FE
+Descrição:
+  Em `ElNinoHeaderLegenda`, remover título "TechDengue…" e subtítulo.
+  Manter barra enxuta apenas com voltar/legenda, reduzindo ruído no primeiro
+  viewport do mapa de projeção.
+
+
+9) Mapa: KPIs do topo no estilo Resumo (compactos)
+Natureza: FE
+Descrição:
+  Reformular `ElNinoMapaKpisTopo` no mesmo idioma visual dos cards do Resumo
+  e, em seguida, compactar espaçamento (menos whitespace) para caber melhor
+  acima do mapa.
+
+
+10) Mapa: choropleth — chips, insights e título
+Natureza: FE
+Descrição:
+  Em `ElNinoMapaChoropleth`:
+  - header com chips
+  - insights reformulados (mais claros e acionáveis)
+  - remover título h3 redundante
+  Melhorar hierarquia visual da área do mapa.
+
+
+11) Legenda TD só em visão gerencial
+Natureza: FE
+Descrição:
+  Exibir a legenda "Sem mapeamento TD / Casos / Mapeado TD" apenas quando
+  `visaoGerencial` estiver ativa. Em visão não gerencial, ocultar para evitar
+  confusão com usuários sem esse contexto.
+
+
+12) Alinhar hectares do insight "Neste mês" com o KPI
+Natureza: FE
+Descrição:
+  Parar de usar o valor aproximado (~27.600 ha) vindo de outra fonte da API no
+  insight "Neste mês".
+  Passar a usar a mesma fonte PostGIS do KPI (`hectaresAreaMapeada`: unif. /
+  bruto, ex.: 3.659,62 / 5.209,69), garantindo consistência entre card e insight.
+
+
+13) Eliminar reload periódico em dev (cache fora de src/)
+Natureza: FE + DX
+Descrição:
+  Causa: BFF Next gravava JSON runtime dentro de `src/utils/el-nino/data/`,
+  e o Fast Refresh fazia full reload da página.
+  Solução:
+  - Criar `cache-paths.ts` (seed vs runtime `.cache/el-nino`)
+  - Migrar writers: visao_gerencial, painel_nao_mapeados, infodengue_mensal,
+    clima_nao_mapeados, malha_mg_ibge (runtime; seed como fallback)
+  - Escrita atômica + warm-up single-flight / no-op se meta válida
+  - `watchOptions.ignored` para `**/.cache/**` em `next.config.js`
+  - Gitignore dos artefatos runtime sob src; manter só `.gitkeep`
+  Critério: navegação/API em `npm run dev` sem full reload por gravação de cache.
+
+
+14) Painel do mapa: nome do bairro com maior cobertura no shape unificado
+Natureza: FE
+Descrição:
+  O painel lateral (`ElNinoMapaChoropleth`) exibia o `name` bruto da camada
+  em area_mapeadas (ex.: "Áreas Unificadas (contagem_petrolândia_(jul.26)
+  Aprovado)").
+  Ajuste em `dissolverSobreposicoesEspaciais` / `extrairNomeBairroDeAreaMapeada`:
+  - analisar cobertura espacial (ha / área geométrica) de cada polígono do
+    cluster unificado
+  - extrair o nome de bairro limpo da atividade/camada
+  - exibir o bairro com maior cobertura (ex.: "Petrolândia")
+  Aplicar também em montagem de áreas/geojson e areasIdentificacao.
+
+
+RESUMO POR NATUREZA
+-------------------
+  FE ........ 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 14
+  BE ........ 6
+  BE + OPS .. 7
+  FE + DX ... 13
+
+
+ARQUIVOS PRINCIPAIS TOCADOS
+---------------------------
+Frontend (FE):
+  - src/components/el-nino/ElNinoKpiCards.tsx
+  - src/components/el-nino/ElNinoGuiaGrafico.tsx
+  - src/components/el-nino/guias-graficos.ts
+  - src/components/el-nino/ElNinoFiltrosTerritorial.tsx
+  - src/components/el-nino/ElNinoPerfilMensal.tsx
+  - src/components/el-nino/ElNinoHeaderLegenda.tsx
+  - src/components/el-nino/ElNinoMapaKpisTopo.tsx
+  - src/components/el-nino/ElNinoMapaChoropleth.tsx
+  - src/pages/el-nino-analytics/index.tsx
+  - src/pages/el-nino-analytics/mapa.tsx
+  - src/utils/el-nino/cache-paths.ts (novo)
+  - src/utils/el-nino/visao-gerencial-local.ts
+  - src/utils/el-nino/painel-nao-mapeado-cache.ts
+  - src/utils/el-nino/infodengue-fallback.ts
+  - src/utils/el-nino/clima-nao-mapeado-local.ts
+  - src/utils/el-nino/anexar-malha-ibge-gerencial.ts
+  - src/utils/el-nino/unir-bairros.ts
+  - src/utils/el-nino/projecao-bairros.ts
+  - src/utils/el-nino/carregar-geometrias-verba-direta.ts
+  - next.config.js
+  - .gitignore
+
+Backend (BE):
+  - src/interfaces/controllers/el-nino-analytics.controller.ts
+  - src/application/services/el-nino-analytics/el-nino-auto-sync.service.ts
+  - scripts/consultar-oni-atual.js
+  - scripts/install-oni-weekly-task.ps1 (OPS)
+  - package.json
+
+================================================================================
+Fim do arquivo
+================================================================================

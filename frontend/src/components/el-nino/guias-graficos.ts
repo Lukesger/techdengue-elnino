@@ -38,7 +38,8 @@ export type GuiaChave =
   | 'heatmap-casos'
   | 'scatter-chuva'
   | 'resumo-elnino'
-  | 'correlacao-lag';
+  | 'correlacao-lag'
+  | 'kpi-correlacao-oni';
 
 /** Textos em linguagem simples — portados do Dash_Completo (guias_graficos.js). */
 export const GUIAS_GRAFICOS: Record<GuiaChave, GuiaGrafico> = {
@@ -189,37 +190,49 @@ export const GUIAS_GRAFICOS: Record<GuiaChave, GuiaGrafico> = {
     ],
   },
   'chuva-consorcio': {
-    titulo: 'Como ler a precipitação do consórcio',
+    titulo: 'Como ler chuva × temperatura × ONI',
     itens: [
       {
         marcador: 'azul',
-        rotulo: 'Sem El Niño (média)',
-        texto: 'Linha azul tracejada: chuva média naquele mês (Jan, Fev…) nos anos históricos sem El Niño (ONI < +0,5 °C).',
+        rotulo: 'Barra azul',
+        texto:
+          'Chuva do mês com ONI < +0,5 °C (sem El Niño). Em 2026, o início do ano costuma ficar assim.',
       },
       {
         marcador: 'laranja',
-        rotulo: 'Com El Niño (média)',
-        texto: 'Linha laranja tracejada: chuva média no mesmo mês nos anos em que o El Niño esteve ativo.',
+        rotulo: 'Barra laranja',
+        texto:
+          'Chuva do mês com El Niño ativo (ONI ≥ +0,5 °C). O status muda mês a mês — não vale para o ano inteiro.',
       },
       {
         marcador: 'azul',
-        rotulo: 'Chuva (ERA5)',
-        texto: 'Barras: volume mensal do ano corrente. Barras claras = climatologia nos meses futuros.',
+        rotulo: 'Média hist. (azul)',
+        texto:
+          'Linha tracejada azul: climatologia do mês enquanto o El Niño não está ativo (média histórica sem EN).',
+      },
+      {
+        marcador: 'laranja',
+        rotulo: 'Média hist. (laranja)',
+        texto:
+          'A partir do mês em que o ONI ≥ +0,5, a mesma linha passa a laranja e usa a média histórica com El Niño.',
+      },
+      {
+        marcador: 'azul',
+        rotulo: 'Clima / temperatura',
+        texto:
+          'Linha azul-céu (°C): temperatura média mensal ERA5 — mesma cor da legenda consolidada de clima.',
       },
       {
         marcador: 'amarelo',
         rotulo: 'ONI NOAA',
-        texto: 'Linha laranja: anomalia da temperatura do oceano Pacífico. Acima de +0,5 °C indica El Niño.',
-      },
-      {
-        marcador: 'neutro',
-        rotulo: 'Apenas o ano corrente',
-        texto: 'O gráfico mostra somente os meses do ano em curso (Jan a Dez), com chuva e ONI lado a lado.',
+        texto:
+          'Linha laranja/âmbar: anomalia do Pacífico — mesma cor da legenda consolidada de ONI. Limiar em +0,5.',
       },
       {
         marcador: 'neutro',
         rotulo: 'Por que importa',
-        texto: 'Chuvas acima do padrão podem formar criadouros — período crítico para vigilância vetorial pós-chuva.',
+        texto:
+          'Chuva + calor fora do padrão favorecem criadouros — use o ONI do mês para ler o contexto, não o rótulo do ano.',
       },
     ],
   },
@@ -280,6 +293,12 @@ export const GUIAS_GRAFICOS: Record<GuiaChave, GuiaGrafico> = {
         marcador: 'neutro',
         rotulo: 'Comparando as linhas',
         texto: 'Quando a linha laranja fica acima da azul, os casos tendem a ser maiores naquele mês com El Niño.',
+      },
+      {
+        marcador: 'amarelo',
+        rotulo: 'Período fixo',
+        texto:
+          'Usa o histórico completo (ex.: 2020–2026). Não muda quando você altera o filtro de anos na tela.',
       },
     ],
   },
@@ -459,6 +478,41 @@ export const GUIAS_GRAFICOS: Record<GuiaChave, GuiaGrafico> = {
         marcador: 'neutro',
         rotulo: 'Uso epidemiológico',
         texto: 'Em dengue, chuva e temperatura costumam antecipar os casos em algumas semanas a meses.',
+      },
+    ],
+  },
+  'kpi-correlacao-oni': {
+    titulo: 'O que este número significa?',
+    itens: [
+      {
+        marcador: 'azul',
+        rotulo: 'Em poucas palavras',
+        texto:
+          'Mostra se, ao longo dos anos, meses com El Niño mais “quente” no oceano costumaram ter mais casos de dengue na região.',
+      },
+      {
+        marcador: 'verde',
+        rotulo: 'Como ler o valor',
+        texto:
+          'Perto de zero: quase não há ligação clara. Mais perto de 1: os dois costumam subir juntos. Valor negativo: um sobe quando o outro cai.',
+      },
+      {
+        marcador: 'amarelo',
+        rotulo: 'Não é chance por pessoa',
+        texto:
+          'Não diz a probabilidade de alguém adoecer. Também não é o total de casos do mês — só a relação entre clima oceânico e casos.',
+      },
+      {
+        marcador: 'laranja',
+        rotulo: 'Mesmo mês (lag 0)',
+        texto:
+          'Compara o clima oceânico de um mês com os casos daquele mesmo mês (sem atraso).',
+      },
+      {
+        marcador: 'neutro',
+        rotulo: 'Base histórica',
+        texto:
+          'Usa vários anos de dados (ex.: 2020–2026), e não muda só porque você alterou o filtro de período na tela.',
       },
     ],
   },

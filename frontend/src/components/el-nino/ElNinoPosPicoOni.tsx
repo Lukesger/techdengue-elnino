@@ -19,11 +19,15 @@ import {
   rotuloEscopoGrafico,
 } from '@/utils/el-nino/graficos-filtros';
 import { analisarCrescimentoPosPicoOni } from '@/utils/el-nino/pos-pico-oni';
+import { completarOniComFallback } from '@/utils/el-nino/oni-historico-fallback';
+import { ANO_INICIO_PADRAO, anoFimDados } from '@/utils/el-nino/constants';
 
 interface Props {
   serie: SerieMensal[] | null | undefined;
   oniMensal?: OniMensal[] | null;
+  /** Ignorado: pós-pico sempre usa o período histórico completo. */
   anoInicio?: number;
+  /** Ignorado: pós-pico sempre usa o período histórico completo. */
   anoFim?: number;
   mesFim?: number;
   nMunicipios?: number;
@@ -57,30 +61,48 @@ const TooltipCustom = ({ active, payload, modoAbsoluto }: any) => {
 };
 
 /**
- * Crescimento de casos após pico do ONI (equivalente a `chartPosPicoOni`).
+ * Crescimento de casos após pico do ONI.
+ * Período fixo (histórico completo): não acompanha o filtro global de anos.
  */
 export const ElNinoPosPicoOni: React.FC<Props> = ({
   serie,
   oniMensal,
-  anoInicio,
-  anoFim,
   mesFim = 12,
   nMunicipios = 0,
   nomeMunicipio,
   loading,
 }) => {
+  const anoInicioFixo = ANO_INICIO_PADRAO;
+  const anoFimFixo = anoFimDados();
+
   const analise = useMemo(() => {
-    if (!serie?.length || !oniMensal?.length || anoInicio == null || anoFim == null) {
-      return { eventos: [], mediaPctM1: null, mediaPctM2: null, modoAbsoluto: false, chartData: [] };
+    if (!serie?.length) {
+      return {
+        eventos: [],
+        mediaPctM1: null,
+        mediaPctM2: null,
+        modoAbsoluto: false,
+        chartData: [],
+      };
     }
 
-    const { anoIni, mesIni, anoFim: af, mesFim: mf } = periodoFiltro(anoInicio, anoFim, mesFim);
+    const oniCompleto = completarOniComFallback(oniMensal ?? []);
+    const { anoIni, mesIni, anoFim: af, mesFim: mf } = periodoFiltro(
+      anoInicioFixo,
+      anoFimFixo,
+      mesFim,
+    );
     const fatia = mesclarOniNaSerie(
       filtrarSerieMesAno(serie, anoIni, mesIni, af, mf),
-      oniMensal,
+      oniCompleto,
     );
 
-    const result = analisarCrescimentoPosPicoOni(oniMensal, fatia, anoIni, af);
+    const result = analisarCrescimentoPosPicoOni(
+      oniCompleto,
+      fatia,
+      anoIni,
+      af,
+    );
     const chartData = result.eventos.map((e) => ({
       ...e,
       pctM1Bar: e.pctM1,
@@ -88,7 +110,7 @@ export const ElNinoPosPicoOni: React.FC<Props> = ({
     }));
 
     return { ...result, chartData };
-  }, [serie, oniMensal, anoInicio, anoFim, mesFim]);
+  }, [serie, oniMensal, anoInicioFixo, anoFimFixo, mesFim]);
 
   const escopoRotulo = rotuloEscopoGrafico(nomeMunicipio, nMunicipios);
 
@@ -104,14 +126,13 @@ export const ElNinoPosPicoOni: React.FC<Props> = ({
   if (!analise.chartData.length) {
     return (
       <article className="bg-white rounded-xl border border-gray-100 p-6 text-center text-sm text-gray-400">
-        Nenhum episódio El Niño com casos no mês do pico ou nos 2 meses seguintes.
+        Nenhum episódio El Niño com casos no mês do pico ou nos 2 meses seguintes
+        no histórico completo ({anoInicioFixo}–{anoFimFixo}).
       </article>
     );
   }
 
   const { modoAbsoluto } = analise;
-  const ai = anoInicio ?? 0;
-  const af = anoFim ?? 0;
 
   return (
     <article className="relative bg-white rounded-xl border border-gray-100 p-4">
@@ -125,12 +146,16 @@ export const ElNinoPosPicoOni: React.FC<Props> = ({
             ? `Casos nos meses após pico ONI (sem casos no mês exato do pico)`
             : '% vs mês do pico ONI (máximo do episódio — não o início)'}
           {escopoRotulo ? ` · ${escopoRotulo}` : ''}
-          {ai && af ? ` · ${ai}–${af}` : ''}
+          {` · histórico completo ${anoInicioFixo}–${anoFimFixo}`}
         </p>
       </header>
 
       <ResponsiveContainer width="100%" height={340}>
-        <BarChart data={analise.chartData} margin={{ top: 8, right: 12, left: 8, bottom: 8 }} barGap={4}>
+        <BarChart
+          data={analise.chartData}
+          margin={{ top: 8, right: 12, left: 8, bottom: 8 }}
+          barGap={4}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis dataKey="rotulo" tick={{ fontSize: 10, fill: '#9ca3af' }} />
           <YAxis
@@ -151,13 +176,21 @@ export const ElNinoPosPicoOni: React.FC<Props> = ({
           <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
           <Bar
             dataKey="pctM1Bar"
-            name={modoAbsoluto ? '+1 mês após pico (casos)' : '+1 mês após pico'}
+            name={
+              modoAbsoluto
+                ? '+1 mês após pico (casos)'
+                : '+1 mês após pico'
+            }
             fill="#3b82f6"
             radius={[3, 3, 0, 0]}
           />
           <Bar
             dataKey="pctM2Bar"
-            name={modoAbsoluto ? '+2 meses após pico (casos)' : '+2 meses após pico'}
+            name={
+              modoAbsoluto
+                ? '+2 meses após pico (casos)'
+                : '+2 meses após pico'
+            }
             fill="#f97316"
             radius={[3, 3, 0, 0]}
           />

@@ -85,11 +85,29 @@ export class ElNinoSlimController {
     const serie = pacote.df_serie || [];
     const ultimo = serie[serie.length - 1];
     const oni = pacote.oni_mensal?.[pacote.oni_mensal.length - 1];
+    const MESES = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
+    ];
+    const oniMesAno = oni
+      ? `Dados de ${MESES[oni.mes - 1] ?? String(oni.mes).padStart(2, '0')}/${oni.ano} · último ONI NOAA disponível`
+      : null;
     return {
       temperatura_atual: ultimo?.Temperatura ?? null,
       umidade_atual: ultimo?.Umidade ?? null,
       casos_ultimo_mes: ultimo?.CasosDengue ?? null,
       oni_atual: oni?.oni ?? null,
+      oni_mes_ano: oniMesAno,
       ano_inicio: pacote.ano_inicio ?? ANO_INICIO,
       ano_fim: pacote.ano_fim ?? ANO_FIM,
     };

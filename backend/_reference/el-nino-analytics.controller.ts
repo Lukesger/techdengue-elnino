@@ -40,6 +40,7 @@ import {
   MunicipioFoco,
   ANO_INICIO,
   ANO_FIM,
+  MESES,
 } from '../../application/services/el-nino-analytics/constants';
 import {
   ElNinoAlertasQueryDto,
@@ -56,6 +57,8 @@ import {
 } from '../../application/dtos/el-nino-analytics/el-nino-casos-por-bairro-response.dto';
 import { ElNinoCasosPorBairroService } from '../../application/services/el-nino-analytics/el-nino-casos-por-bairro.service';
 import { ClimaHistoricoStoreService } from '../../application/services/el-nino-analytics/clima-historico-store.service';
+import { ElNinoPoiHectareStoreService } from '../../application/services/el-nino-analytics/el-nino-poi-hectare-store.service';
+import { ElNinoMunicipioPainelService } from '../../application/services/el-nino-analytics/el-nino-municipio-painel.service';
 import type { User } from '../../domain/entities/user.entity';
 import type { PacoteOverview } from '../../application/services/el-nino-analytics/el-nino-pipeline.service';
 
@@ -109,6 +112,8 @@ export class ElNinoAnalyticsController {
     private readonly casosPorBairroService: ElNinoCasosPorBairroService,
     private readonly ibgeSidraArea: IbgeSidraAreaService,
     private readonly climaHistoricoStore: ClimaHistoricoStoreService,
+    private readonly poiHectareStore: ElNinoPoiHectareStoreService,
+    private readonly municipioPainel: ElNinoMunicipioPainelService,
   ) {}
 
   /** 5xx genérico: detalhes só em log sanitizado. */
@@ -182,6 +187,7 @@ export class ElNinoAnalyticsController {
       municipios: municipiosFoco,
       populacoes,
       forceRefresh,
+      modulo: escopo.tipo,
     });
     return { pacote, escopo, foco };
   }
@@ -204,6 +210,7 @@ export class ElNinoAnalyticsController {
       municipios: municipiosFoco,
       populacoes,
       forceRefresh,
+      modulo: escopo.tipo,
     });
     return { pacote, escopo, foco, municipiosFoco, populacoes };
   }
@@ -303,6 +310,22 @@ export class ElNinoAnalyticsController {
     const elninoCorr = pacote.elnino.correlacoes.find((c) =>
       c.variavel.includes('ONI'),
     );
+    const rotuloEscopo =
+      mun?.cidade ??
+      (foco.length === 1 ? foco[0].nome : `${foco.length} municípios`);
+    // KPI de correlação: Pearson ONI[t] × casos[t] (lag 0) na base histórica
+    // completa do pacote — NÃO acompanha o filtro global de período da UI.
+    const periodoCorr = `${pacote.ano_inicio ?? ANO_INICIO}–${pacote.ano_fim ?? ANO_FIM}`;
+    const subtituloCorr = elninoCorr
+      ? [
+          'ONI (mês X) × casos (mês X)',
+          'lag 0',
+          `base ${periodoCorr}`,
+          elninoCorr.interpretacao,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : `Sem pares suficientes · base ${periodoCorr}`;
 
     return {
       kpis: [
@@ -312,14 +335,12 @@ export class ElNinoAnalyticsController {
             atual?.temperatura_c != null
               ? `${fmtDecimal(atual.temperatura_c)} °C`
               : '—',
-          subtitulo:
-            mun?.cidade ??
-            (foco.length === 1 ? foco[0].nome : `${foco.length} municípios`),
+          subtitulo: rotuloEscopo,
         },
         {
           titulo: 'Umidade relativa',
           valor: atual?.umidade_pct != null ? `${atual.umidade_pct} %` : '—',
-          subtitulo: 'fator de proliferação do vetor',
+          subtitulo: `${rotuloEscopo} · atual · fator de proliferação do vetor`,
         },
         {
           titulo: gc ? 'Casos (último mês)' : 'Casos no escopo (último mês)',
@@ -330,7 +351,7 @@ export class ElNinoAnalyticsController {
           titulo: 'ONI / El Niño',
           valor: oniUlt ? fmtDecimal(oniUlt.oni, 2) : '—',
           subtitulo: oniUlt
-            ? `Índice NOAA — ${oniUlt.ano}/${String(oniUlt.mes).padStart(2, '0')}`
+            ? `Dados de ${MESES[oniUlt.mes - 1] ?? String(oniUlt.mes).padStart(2, '0')}/${oniUlt.ano} · último ONI NOAA disponível`
             : '',
         },
         {
@@ -338,12 +359,7 @@ export class ElNinoAnalyticsController {
           valor: elninoCorr
             ? `r = ${fmtDecimal(elninoCorr.correlacao, 3)}`
             : '—',
-          subtitulo:
-            pacote.elnino.resumo?.variacao_casos_pct != null
-              ? `El Niño vs neutro: ${pacote.elnino.resumo.variacao_casos_pct > 0 ? '+' : ''}${fmtDecimal(
-                  pacote.elnino.resumo.variacao_casos_pct,
-                )} % casos`
-              : '',
+          subtitulo: subtituloCorr,
         },
       ],
     };
@@ -470,18 +486,39 @@ export class ElNinoAnalyticsController {
   @AuthenticatedOnly()
   @RequirePermission('analytics', 'elnino:read')
   @ApiOperation({
-    summary: 'Previsão de clima (14 dias) — Open-Meteo ao vivo',
+    summary:
+      'Previsão de clima (14 dias) — cache disco (TechDengue + não mapeados) / Open-Meteo',
   })
   async clima(@Query() query: ElNinoClimaQueryDto, @Req() req: { user: User }) {
+    const escopo = await this.scope.resolverParaUsuario(req.user);
+    const gcQuery =
+      query.geocode != null && Number(query.geocode) > 0
+        ? Number(query.geocode)
+        : null;
+
+    // Atalho: cache em disco sem montar overview (painel de mun. não mapeado).
+    if (gcQuery != null) {
+      if (!escopo.isGlobal && !escopo.geocodes.includes(gcQuery)) {
+        throw new ForbiddenException(
+          'Município fora do escopo da análise para este usuário.',
+        );
+      }
+      const doCache = await this.pipeline.obterPrevisaoClima(null, gcQuery);
+      if (doCache) return doCache;
+    }
+
     const { pacote, foco } = await this.getPacote(req.user, query);
-    const gc = query.geocode ?? foco[0]?.geocode;
+    const gc = gcQuery ?? foco[0]?.geocode;
     if (!gc) {
       throw new HttpException(
         'Nenhum município disponível no escopo do usuário.',
         HttpStatus.BAD_REQUEST,
       );
     }
-    const noEscopo = foco.some((m) => m.geocode === gc);
+    const noEscopo =
+      escopo.isGlobal ||
+      foco.some((m) => m.geocode === gc) ||
+      escopo.geocodes.includes(gc);
     if (!noEscopo) {
       throw new ForbiddenException(
         'Município fora do escopo da análise para este usuário.',
@@ -575,13 +612,26 @@ export class ElNinoAnalyticsController {
   @AuthenticatedOnly()
   @RequirePermission('analytics', 'elnino:read')
   @ApiOperation({
-    summary: 'GeoJSON IBGE dos municípios do escopo (para choropleth)',
+    summary:
+      'GeoJSON IBGE dos municípios (escopo ou MG completa com visao=todos)',
   })
   async malha(
     @Query() query: ElNinoGeocodeQueryDto,
     @Req() req: { user: User },
   ) {
-    const { foco } = await this.resolverFoco(req.user, query);
+    if (query.visao === 'todos') {
+      return this.ibge.carregarMalhaMg();
+    }
+    const { foco, escopo } = await this.resolverFoco(req.user, query);
+    const temFocoTerritorial =
+      (query.contratoId != null && Number(query.contratoId) > 0) ||
+      (query.geocode != null && Number(query.geocode) > 0) ||
+      (Array.isArray(query.geocodes) && query.geocodes.length > 0) ||
+      foco.length > 0;
+    // Global sem filtro → MG; com contratoId/geocode → só o foco.
+    if (escopo.isGlobal && !temFocoTerritorial) {
+      return this.ibge.carregarMalhaMg();
+    }
     const geocodes = foco.map((m) => m.geocode);
     return this.ibge.carregarMalhaPorGeocodes(geocodes);
   }
@@ -591,19 +641,21 @@ export class ElNinoAnalyticsController {
   @RequirePermission('analytics', 'elnino:refresh')
   @ApiOperation({ summary: 'Força refresh do pipeline (admin)' })
   async refresh(@Req() req: { user: User }) {
-    const { municipiosFoco, populacoes } = await this.resolverFoco(
+    const { escopo, municipiosFoco, populacoes } = await this.resolverFoco(
       req.user,
       {},
     );
     const pacote = await this.pipeline.refresh({
       municipios: municipiosFoco,
       populacoes,
+      modulo: escopo.tipo,
     });
     return {
       ok: true,
       atualizado_em: pacote.atualizado_em,
       fontes: pacote.fontes,
       avisos: pacote.avisos,
+      poi_hectare_atualizado_em: this.poiHectareStore.metaAtualizadoEm(),
     };
   }
 
@@ -624,11 +676,20 @@ export class ElNinoAnalyticsController {
       const { pacote, escopo, municipiosFoco, populacoes } =
         await this.getPacoteComFoco(req.user, query);
 
-      const payload = this.projecao.montarPayloadMapaProjecao({
+      // Consulta/estrutura montada no backend (payload + malha + cache por escopo).
+      // Gerencial (visao=todos ou escopo global): malha IBGE MG completa,
+      // cruzada com área/POI TechDengue vs municípios não mapeados.
+      // Malha MG completa só na visão gerencial explícita (visao=todos).
+      // Usuário global com contratoId/geocode deve ver só o foco filtrado.
+      const temFocoTerritorial =
+        (query.contratoId != null && Number(query.contratoId) > 0) ||
+        (query.geocode != null && Number(query.geocode) > 0) ||
+        (Array.isArray(query.geocodes) && query.geocodes.length > 0);
+      return await this.projecao.montarMapaProjecaoComMalha({
         municipios: municipiosFoco,
         mensal: pacote.df_mensal_mun,
         oniLinhas: pacote.oni_mensal,
-        alertasApi: pacote.alertas_infodengue, // AlertaInfodengue[] do pipeline
+        alertasApi: pacote.alertas_infodengue,
         climaMunicipios: pacote.clima_municipios,
         populacoes,
         rotuloConjunto: escopo.rotulo,
@@ -641,65 +702,9 @@ export class ElNinoAnalyticsController {
               ]
             : []),
         ],
+        malhaCompleta:
+          query.visao === 'todos' || (escopo.isGlobal && !temFocoTerritorial),
       });
-
-      // Anexa malha IBGE ao payload (choropleth exige data.geojson).
-      const geocodes = municipiosFoco.map((m) => m.geocode);
-      try {
-        const malhaFoco = await this.ibge.carregarMalhaPorGeocodes(geocodes);
-        const features = malhaFoco?.features ?? [];
-        if (features.length) {
-          const porNome = new Map(
-            municipiosFoco.map((m) => [m.geocode, m.municipio]),
-          );
-          const geojson = {
-            type: 'FeatureCollection' as const,
-            features: features.map((f) => {
-              const gc = Number(
-                f.properties?.codarea ?? f.properties?.geocode ?? f.id ?? 0,
-              );
-              return {
-                ...f,
-                properties: {
-                  ...(f.properties ?? {}),
-                  geocode: gc,
-                  codarea: String(gc).padStart(7, '0'),
-                  name:
-                    porNome.get(gc) ??
-                    f.properties?.name ??
-                    f.properties?.nome ??
-                    `Município ${gc}`,
-                },
-              };
-            }),
-          };
-          return {
-            ...payload,
-            geojson,
-            malha_fonte: 'IBGE Malhas API — por município',
-            fontes: [...payload.fontes, 'IBGE Malhas — polígonos municipais'],
-          };
-        }
-        return {
-          ...payload,
-          geojson: null,
-          malha_fonte: null,
-          avisos: [
-            ...payload.avisos,
-            `Malha geográfica indisponível: nenhum polígono IBGE para ${geocodes.length} município(s).`,
-          ],
-        };
-      } catch {
-        return {
-          ...payload,
-          geojson: null,
-          malha_fonte: null,
-          avisos: [
-            ...payload.avisos,
-            'Falha ao carregar malha IBGE para o mapa de projeção.',
-          ],
-        };
-      }
     } catch (err) {
       if (err instanceof ForbiddenException || err instanceof HttpException) {
         throw err;
@@ -863,6 +868,45 @@ export class ElNinoAnalyticsController {
       municipioId: mun.municipioId,
       nome: mun.nome,
     };
+  }
+
+  @Get('municipio-painel')
+  @AuthenticatedOnly()
+  @RequirePermission('analytics', 'elnino:read')
+  @ApiOperation({
+    summary:
+      'Resumo do painel do mapa (população + casos + projeção) — TechDengue ou não mapeado',
+  })
+  async municipioPainelEndpoint(
+    @Query() query: ElNinoGeocodeQueryDto,
+    @Req() req: { user: User },
+  ) {
+    if (!query.geocode) {
+      throw new BadRequestException('geocode é obrigatório');
+    }
+    const gc = Number(query.geocode);
+    // Painel de mun. não mapeado (malha IBGE gerencial): pop Censo + Infodengue
+    // são dados públicos. Escopo territorial só restringe o foco TechDengue;
+    // qualquer IBGE MG (31…) pode ser consultado no mapa visao=todos.
+    const ehMg = Number.isFinite(gc) && Math.floor(gc / 100_000) === 31;
+    const escopo = await this.scope.resolverParaUsuario(req.user);
+    if (!escopo.isGlobal && !ehMg && !escopo.geocodes.includes(gc)) {
+      throw new ForbiddenException(
+        'Município fora do escopo da análise para este usuário.',
+      );
+    }
+    try {
+      const resumo = await this.municipioPainel.obterResumo(gc);
+      if (!resumo) {
+        throw new NotFoundException(
+          `Resumo epidemiológico indisponível para geocode ${gc}`,
+        );
+      }
+      return resumo;
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      throw this.falhaInterna('municipio-painel', err);
+    }
   }
 
   @Get('casos-por-bairro')
