@@ -14,3 +14,15 @@ read_acessos/
 coverage/
 .turbo/
 *.pem
+
+# El Niño — cache runtime (fora do watcher do Next)
+.cache/
+frontend/.cache/
+frontend/src/utils/el-nino/data/visao_gerencial/**
+!frontend/src/utils/el-nino/data/visao_gerencial/.gitkeep
+frontend/src/utils/el-nino/data/painel_nao_mapeados/**
+!frontend/src/utils/el-nino/data/painel_nao_mapeados/.gitkeep
+frontend/src/utils/el-nino/data/infodengue_mensal/**
+!frontend/src/utils/el-nino/data/infodengue_mensal/.gitkeep
+frontend/src/utils/el-nino/data/clima_nao_mapeados/**
+!frontend/src/utils/el-nino/data/clima_nao_mapeados/.gitkeep

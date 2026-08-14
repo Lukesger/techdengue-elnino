@@ -1,6 +1,14 @@
 import { normalizePublicApiBaseUrl } from '../../config/api';
 import { buscarNomeMunicipioLista, obterConsorcio } from './contracts';
 import { ANO_INICIO_PADRAO, anoFimDados } from './constants';
+import { fetchComTls } from './tls-fetch';
+import fs from 'fs';
+import {
+  escreverJsonAtomico,
+  garantirDirRuntime,
+  runtimePath,
+  seedPath,
+} from './cache-paths';
 
 const ALERTCITY = 'https://info.dengue.mat.br/api/alertcity';
 const MESES = [
@@ -10,9 +18,12 @@ const MESES = [
 
 const ANO_INICIO = ANO_INICIO_PADRAO;
 const ANO_FIM = anoFimDados();
-const CACHE_TTL_MS = 30 * 60 * 1000;
+/** Disco: 12h — evita Infodengue no hot path do painel. */
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const CONSOLIDADO_FILE = seedPath('casos_historico_consolidado.gjson');
 
 const memoriaCasos = new Map<string, { exp: number; rows: any[] }>();
+let consolidadoIndex: Map<number, any[]> | null = null;
 
 interface RegistroSemanal {
   SE?: string | number;
@@ -24,6 +35,98 @@ interface RegistroSemanal {
 function validarCasos(v: unknown): number {
   const n = Math.round(Number(v) || 0);
   return Math.max(0, n);
+}
+
+function garantirDirMensal(): void {
+  garantirDirRuntime('infodengue_mensal');
+}
+
+function arquivoMensal(geocode: number): string {
+  return runtimePath('infodengue_mensal', `${Number(geocode)}.json`);
+}
+
+function lerDiscoMensal(geocode: number): any[] | null {
+  try {
+    const f = arquivoMensal(geocode);
+    if (!fs.existsSync(f)) return null;
+    const env = JSON.parse(fs.readFileSync(f, 'utf8')) as {
+      expira_em?: string;
+      rows?: any[];
+    };
+    const exp = env.expira_em ? Date.parse(env.expira_em) : 0;
+    if (!Number.isFinite(exp) || exp <= Date.now() || !env.rows?.length) {
+      return null;
+    }
+    return env.rows;
+  } catch {
+    return null;
+  }
+}
+
+function gravarDiscoMensal(geocode: number, rows: any[]): void {
+  if (!rows.length) return;
+  try {
+    garantirDirMensal();
+    const env = {
+      atualizado_em: new Date().toISOString(),
+      expira_em: new Date(Date.now() + CACHE_TTL_MS).toISOString(),
+      geocode: Number(geocode),
+      ano_inicio: ANO_INICIO,
+      ano_fim: ANO_FIM,
+      rows,
+    };
+    const f = arquivoMensal(geocode);
+    escreverJsonAtomico(f, env);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Série histórica compacta — zero HTTP. */
+function carregarConsolidadoPorGeocode(geocode: number): any[] {
+  if (!consolidadoIndex) {
+    consolidadoIndex = new Map();
+    try {
+      if (!fs.existsSync(CONSOLIDADO_FILE)) return [];
+      const raw = JSON.parse(fs.readFileSync(CONSOLIDADO_FILE, 'utf8')) as {
+        linhas?: Array<{
+          g: number;
+          a: number;
+          m: number;
+          cn: number;
+          ce: number;
+        }>;
+      };
+      for (const l of raw.linhas ?? []) {
+        const gc = Number(l.g);
+        if (!consolidadoIndex.has(gc)) consolidadoIndex.set(gc, []);
+        consolidadoIndex.get(gc)!.push({
+          geocode: gc,
+          Ano: Number(l.a),
+          MesNum: Number(l.m),
+          Mes: MESES[Number(l.m) - 1],
+          AnoMes: `${l.a}-${String(l.m).padStart(2, '0')}`,
+          CasosDengue: Number(l.ce) || 0,
+          casos_estimados: Number(l.ce) || 0,
+          casos_notificados: Number(l.cn) || 0,
+          _fonte: 'casos_historico_consolidado.gjson',
+        });
+      }
+    } catch {
+      consolidadoIndex = new Map();
+    }
+  }
+  return consolidadoIndex.get(Number(geocode)) ?? [];
+}
+
+function mesclarLinhas(a: any[], b: any[]): any[] {
+  const map = new Map<string, any>();
+  for (const r of [...a, ...b]) {
+    map.set(`${r.Ano}-${r.MesNum}`, r);
+  }
+  return Array.from(map.values()).sort(
+    (x, y) => x.Ano - y.Ano || x.MesNum - y.MesNum,
+  );
 }
 
 function anoMesDeSemana(reg: RegistroSemanal): [number, number] | null {
@@ -81,13 +184,20 @@ async function buscarSemanasInfodengue(
   url.searchParams.set('ey_start', String(eyStart));
   url.searchParams.set('ey_end', String(eyEnd));
 
-  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(30000) });
+  // Janela curta no hot path: só anos recentes (evita 5+ anos de semanas).
+  const res = await fetchComTls(url.toString(), {
+    signal: AbortSignal.timeout(18_000),
+  });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
 
-function paraLinhasMensais(geocode: number, municipio: string, semanas: RegistroSemanal[]) {
+function paraLinhasMensais(
+  geocode: number,
+  municipio: string,
+  semanas: RegistroSemanal[],
+) {
   const mensal = agregarSemanasMensal(semanas);
   const linhas: any[] = [];
   for (const [k, vals] of mensal.entries()) {
@@ -110,25 +220,59 @@ function paraLinhasMensais(geocode: number, municipio: string, semanas: Registro
   return linhas;
 }
 
+/**
+ * Série mensal Infodengue.
+ * Ordem: memória → disco → consolidado local → HTTP (grava disco).
+ */
 export async function buscarCasosMensaisInfodengue(
   geocode: number,
   municipio?: string,
+  opts?: { allowLive?: boolean },
 ): Promise<any[]> {
   const gc = Number(geocode);
   const nome = municipio || buscarNomeMunicipioLista(gc) || `Município ${gc}`;
+  const allowLive = opts?.allowLive !== false;
   const cacheKey = `${gc}:${ANO_INICIO}-${ANO_FIM}`;
   const hit = memoriaCasos.get(cacheKey);
   if (hit && hit.exp > Date.now()) return hit.rows;
 
+  const doDisco = lerDiscoMensal(gc);
+  if (doDisco?.length) {
+    memoriaCasos.set(cacheKey, {
+      rows: doDisco,
+      exp: Date.now() + CACHE_TTL_MS,
+    });
+    return doDisco;
+  }
+
+  const consolidado = carregarConsolidadoPorGeocode(gc).map((r) => ({
+    ...r,
+    municipio: nome,
+  }));
+
+  if (!allowLive) {
+    if (consolidado.length) {
+      memoriaCasos.set(cacheKey, {
+        rows: consolidado,
+        exp: Date.now() + CACHE_TTL_MS,
+      });
+    }
+    return consolidado;
+  }
+
   try {
-    const semanas = await buscarSemanasInfodengue(gc, ANO_INICIO, ANO_FIM);
-    const rows = paraLinhasMensais(gc, nome, semanas);
+    // 2 anos recentes + consolidado histórico — bem mais rápido que 2020→hoje.
+    const anoLiveInicio = Math.max(ANO_INICIO, ANO_FIM - 1);
+    const semanas = await buscarSemanasInfodengue(gc, anoLiveInicio, ANO_FIM);
+    const live = paraLinhasMensais(gc, nome, semanas);
+    const rows = mesclarLinhas(consolidado, live);
     if (rows.length) {
+      gravarDiscoMensal(gc, rows);
       memoriaCasos.set(cacheKey, { rows, exp: Date.now() + CACHE_TTL_MS });
     }
     return rows;
   } catch {
-    return [];
+    return consolidado;
   }
 }
 

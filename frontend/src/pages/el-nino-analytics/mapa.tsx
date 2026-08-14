@@ -17,10 +17,13 @@ import { carregarGeometriasVerbaDireta } from '@/utils/el-nino/carregar-geometri
 import {
   deveExibirProjecaoBairros,
   isContratoVerbaDireta,
-  isGeocodeVerbaDireta,
   type BairroMapaFeature,
 } from '@/utils/el-nino/projecao-bairros';
-import { type AreaIdentificavel, hectaresDeGeometria } from '@/utils/el-nino/unir-bairros';
+import {
+  type AreaIdentificavel,
+  hectaresDeGeometria,
+  unirGeometriasBairro,
+} from '@/utils/el-nino/unir-bairros';
 import { baixarArquivo, bairrosParaKml } from '@/utils/el-nino/geojson-to-kml';
 
 interface ConsorcioRef {
@@ -56,6 +59,10 @@ export default function ElNinoMapaPage() {
   const [mesNum, setMesNum] = useState<number | null>(null);
   const [geocodeFocado, setGeocodeFocado] = useState<number | null>(null);
   const [consorcios, setConsorcios] = useState<ConsorcioRef[]>([]);
+  const [escopo, setEscopo] = useState<{
+    isGlobal: boolean;
+    geocodes: number[];
+  } | null>(null);
   const [bairros, setBairros] = useState<BairroMapaFeature[] | null>(null);
   const [bairrosModo, setBairrosModo] = useState<
     'areas_mapeadas' | 'envoltoria_pois' | 'indisponivel' | null
@@ -78,76 +85,140 @@ export default function ElNinoMapaPage() {
     unificados: number;
   } | null>(null);
 
-  const { contratoId, geocode } = useMemo(
+  const { contratoId, geocode, visao } = useMemo(
     () => parseMapaProjecaoQuery(router.query),
     [router.query],
   );
+
+  /**
+   * Visão gerencial só com escopo global.
+   * /mapa sem query (sidebar): município usa geocode/contrato do JWT (evita 403).
+   */
+  const modoGerencialTodos =
+    Boolean(escopo?.isGlobal) &&
+    (visao === 'todos' || (contratoId == null && geocode == null));
+
+  const geocodeEfetivo = useMemo(() => {
+    if (geocode != null) return geocode;
+    if (modoGerencialTodos) return null;
+    if (escopo?.geocodes?.length === 1) return escopo.geocodes[0]!;
+    return null;
+  }, [geocode, modoGerencialTodos, escopo]);
+
+  const contratoIdEfetivo = useMemo(() => {
+    if (contratoId != null) return contratoId;
+    if (modoGerencialTodos) return null;
+    if (consorcios.length === 1) return consorcios[0]!.id;
+    return null;
+  }, [contratoId, modoGerencialTodos, consorcios]);
 
   const inicioPagina = getRedirectRouteByProfile(user);
 
   useEffect(() => {
     let cancelado = false;
-    elNinoApi
-      .getConsorcios()
-      .then((resp) => {
-        if (!cancelado) setConsorcios(resp?.consorcios ?? []);
-      })
-      .catch(() => {
-        if (!cancelado) setConsorcios([]);
-      });
+    Promise.all([
+      elNinoApi.getEscopo().catch(() => null),
+      elNinoApi.getConsorcios().catch(() => null),
+    ]).then(([esc, cons]) => {
+      if (cancelado) return;
+      if (esc) {
+        setEscopo({
+          isGlobal: Boolean(esc.isGlobal),
+          geocodes: Array.isArray(esc.geocodes)
+            ? esc.geocodes
+                .map(Number)
+                .filter((n) => Number.isFinite(n) && n > 0)
+            : [],
+        });
+      } else {
+        setEscopo({ isGlobal: false, geocodes: [] });
+      }
+      setConsorcios(cons?.consorcios ?? []);
+    });
     return () => {
       cancelado = true;
     };
   }, []);
 
-  const ehVerbaDireta = useMemo(() => {
+  /**
+   * Carrega polígonos de area_mapeadas (GIS) com município em foco.
+   * Inclui verba direta e municípios de consórcio (ex.: São Francisco de Paula).
+   */
+  const deveCarregarAreasMapeadas = useMemo(() => {
     if (
       deveExibirProjecaoBairros(
-        geocode ?? null,
-        contratoId ?? null,
+        geocodeEfetivo ?? null,
+        contratoIdEfetivo ?? null,
         consorcios,
       )
     ) {
       return true;
     }
     // Contrato de verba direta na URL, mesmo sem geocode ainda.
-    if (isContratoVerbaDireta(contratoId ?? null, consorcios)) return true;
-    // Sidebar /mapa sem query: 1 município de verba direta no payload.
+    if (isContratoVerbaDireta(contratoIdEfetivo ?? null, consorcios)) return true;
+    // Um único município no payload / escopo municipal.
     if (data?.municipios?.length === 1) {
       const gc = Number(data.municipios[0].geocode);
-      if (isGeocodeVerbaDireta(gc, consorcios)) return true;
+      if (Number.isFinite(gc) && gc > 0) return true;
     }
-    // Escopo municipal: único contrato acessível é verba direta (ex.: Contagem).
     if (
       consorcios.length === 1 &&
-      Number(consorcios[0]?.eConsorcio) === 0 &&
-      (data == null || data.municipios.length <= 1)
+      (data == null || data.municipios.length <= 1) &&
+      (Number(consorcios[0]?.eConsorcio) === 0 ||
+        consorcios[0]?.municipios?.length === 1 ||
+        escopo?.geocodes?.length === 1)
     ) {
       return true;
     }
     return false;
-  }, [geocode, contratoId, consorcios, data]);
+  }, [
+    geocodeEfetivo,
+    contratoIdEfetivo,
+    consorcios,
+    data,
+    escopo?.geocodes?.length,
+  ]);
 
-  /** Geocode do município de verba direta (filtro, único mun do payload ou do contrato). */
+  /** Alias legado: UI/KML usam o mesmo gate das áreas mapeadas. */
+  const ehVerbaDireta = deveCarregarAreasMapeadas;
+
+  /** Geocode do município em foco para plotar area_mapeadas. */
   const geocodeBairro = useMemo(() => {
-    if (!ehVerbaDireta) return null;
-    if (geocode != null) return geocode;
+    if (!deveCarregarAreasMapeadas) return null;
+    if (geocodeEfetivo != null) return geocodeEfetivo;
     if (data?.municipios?.length === 1) return Number(data.municipios[0].geocode);
-    if (contratoId != null) {
-      const c = consorcios.find((x) => x.id === contratoId);
+    if (contratoIdEfetivo != null) {
+      const c = consorcios.find((x) => x.id === contratoIdEfetivo);
       if (c?.municipios?.length === 1) return Number(c.municipios[0].geocode);
     }
     if (consorcios.length === 1 && consorcios[0]?.municipios?.length === 1) {
       return Number(consorcios[0].municipios[0].geocode);
     }
+    if (escopo?.geocodes?.length === 1) return escopo.geocodes[0]!;
     return null;
-  }, [ehVerbaDireta, geocode, data, contratoId, consorcios]);
+  }, [
+    deveCarregarAreasMapeadas,
+    geocodeEfetivo,
+    data,
+    contratoIdEfetivo,
+    consorcios,
+    escopo?.geocodes,
+  ]);
 
   useEffect(() => {
-    if (!router.isReady) return;
+    if (!router.isReady || escopo == null) return;
 
-    if (geocode != null) {
-      setGeocodeFocado(geocode);
+    // Munícipio sem filtro na URL: espera geocode/contrato do JWT antes de chamar a API.
+    if (
+      !modoGerencialTodos &&
+      contratoIdEfetivo == null &&
+      geocodeEfetivo == null
+    ) {
+      return;
+    }
+
+    if (geocodeEfetivo != null) {
+      setGeocodeFocado(geocodeEfetivo);
     }
 
     let cancelado = false;
@@ -155,10 +226,14 @@ export default function ElNinoMapaPage() {
     setErro(null);
 
     elNinoApi
-      .getMapaProjecao({
-        contratoId: contratoId ?? undefined,
-        geocode: geocode ?? undefined,
-      })
+      .getMapaProjecao(
+        modoGerencialTodos
+          ? { visao: 'todos' }
+          : {
+              contratoId: contratoIdEfetivo ?? undefined,
+              geocode: geocodeEfetivo ?? undefined,
+            },
+      )
       .then((resp) => {
         if (cancelado) return;
         setData(resp);
@@ -167,12 +242,20 @@ export default function ElNinoMapaPage() {
       })
       .catch((err) => {
         if (cancelado) return;
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status;
         const msg =
-          (err as { response?: { data?: { error?: string } } })?.response?.data
-            ?.error ??
+          (err as { response?: { data?: { error?: string; message?: string } } })
+            ?.response?.data?.error ??
+          (err as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ??
           (err as Error)?.message ??
           'Erro ao carregar mapa de projeção';
-        setErro(msg);
+        setErro(
+          status === 403
+            ? 'Sem permissão para este escopo territorial. Abra o mapa pelo seu município/contrato.'
+            : msg,
+        );
       })
       .finally(() => {
         if (!cancelado) setLoading(false);
@@ -181,10 +264,18 @@ export default function ElNinoMapaPage() {
     return () => {
       cancelado = true;
     };
-  }, [router.isReady, contratoId, geocode]);
+  }, [
+    router.isReady,
+    escopo,
+    escopo?.isGlobal,
+    escopo?.geocodes?.length,
+    contratoIdEfetivo,
+    geocodeEfetivo,
+    modoGerencialTodos,
+  ]);
 
   useEffect(() => {
-    if (!ehVerbaDireta || geocodeBairro == null || !data) {
+    if (!deveCarregarAreasMapeadas || geocodeBairro == null || !data) {
       setBairros(null);
       setBairrosModo(null);
       setBairrosErro(null);
@@ -215,7 +306,7 @@ export default function ElNinoMapaPage() {
 
     carregarGeometriasVerbaDireta({
       geocode: geocodeBairro,
-      contratoId,
+      contratoId: contratoIdEfetivo,
       mun,
       onBairrosProntos: (parcial) => {
         if (cancelado) return;
@@ -254,8 +345,8 @@ export default function ElNinoMapaPage() {
         setBairrosErro(
           msg === 'fetch failed'
             ? 'Não foi possível conectar ao servidor de geometrias. Verifique se o backend está acessível e tente novamente.'
-            : msg.includes('403') || msg.toLowerCase().includes('permiss')
-              ? 'Sem permissão area-mapeada:read para exportar geometrias. Solicite acesso ou use um perfil com essa permissão.'
+            : msg.includes('analytics:elnino:read')
+              ? 'Sem permissão para o mapa El Niño (analytics:elnino:read).'
               : msg,
         );
       })
@@ -266,7 +357,7 @@ export default function ElNinoMapaPage() {
     return () => {
       cancelado = true;
     };
-  }, [ehVerbaDireta, geocodeBairro, data, contratoId]);
+  }, [deveCarregarAreasMapeadas, geocodeBairro, data, contratoIdEfetivo]);
 
   const subtitulo = useMemo(() => {
     if (!data) return null;
@@ -275,20 +366,44 @@ export default function ElNinoMapaPage() {
 
   const exportarKmlUnificados = () => {
     if (!bairros?.length) return;
-    const n = contagemPoligonos?.unificados ?? bairros.length;
     const prefixo = geocodeBairro != null ? String(geocodeBairro) : 'areas';
+    const nBrutos = contagemPoligonos?.brutos ?? bairros.length;
+
+    // Força 1 placemark: une todas as áreas (ex.: Uberlândia 93 → 1 MultiPolygon/Polygon).
+    const geometriaUnida = unirGeometriasBairro(bairros.map((b) => b.geometry));
+    const featuresKml = geometriaUnida
+      ? [
+          {
+            nome: 'Área mapeada unificada',
+            hectaresUnicos:
+              hectaresDeGeometria(geometriaUnida) ||
+              bairros.reduce(
+                (sum, b) =>
+                  sum +
+                  (hectaresDeGeometria(b.geometry) ||
+                    Number(b.hectaresUnicos) ||
+                    0),
+                0,
+              ),
+            geometry: geometriaUnida,
+            descricaoExtra: `${nBrutos} áreas brutas unificadas em 1 geometria`,
+          },
+        ]
+      : bairros.map((b) => ({
+          nome: b.nome,
+          hectaresUnicos: b.hectaresUnicos,
+          geometry: b.geometry,
+          descricaoExtra: b.criterioAtribuicao,
+        }));
+
+    const nExport = featuresKml.length;
     const kml = bairrosParaKml(
-      bairros.map((b) => ({
-        nome: b.nome,
-        hectaresUnicos: b.hectaresUnicos,
-        geometry: b.geometry,
-        descricaoExtra: b.criterioAtribuicao,
-      })),
-      `${prefixo}-${n}-areas-unificadas`,
+      featuresKml,
+      `${prefixo}-${nExport}-area-unificada`,
     );
     baixarArquivo(
       kml,
-      `${prefixo}-${n}-unificados.kml`,
+      `${prefixo}-${nExport}-unificado.kml`,
       'application/vnd.google-earth.kml+xml',
     );
   };
@@ -306,6 +421,49 @@ export default function ElNinoMapaPage() {
     return { totalHa, metodo, fonte };
   }, [resumoBairrosApi, bairros]);
 
+  /** Mesma fonte para KPI Densidade e insight "Neste mês" (PostGIS > API). */
+  const hectaresAreaMapeada = useMemo(() => {
+    if (!resumoBairros || !ehVerbaDireta) return null;
+    const munFoco =
+      data?.municipios?.find(
+        (m) => Number(m.geocode) === Number(geocodeFocado),
+      ) ??
+      (data?.municipios?.length === 1 ? data.municipios[0] : null);
+    const poisStore = Number(munFoco?.poi_hectare?.total_registros);
+    const haStore = Number(munFoco?.poi_hectare?.hectares_mapeados);
+    const totalPoisApi = Number(resumoBairros.totalPois);
+    const totalHa = Number(resumoBairros.totalHa) || 0;
+    const brutoApi = Number(resumoBairros.totalHaBruto);
+    // Não usar hectares_mapeados da API se estiver inflado vs unificado
+    // (sobreposição de polígonos — ex.: 27.600 vs ~3.660 unificados).
+    const haStoreConfiavel =
+      Number.isFinite(haStore) &&
+      haStore > 0 &&
+      (totalHa <= 0 || haStore <= totalHa * 1.5);
+    let totalBruto =
+      (Number.isFinite(brutoApi) && brutoApi > 0 ? brutoApi : 0) ||
+      (haStoreConfiavel ? haStore : 0) ||
+      totalHa;
+    if (
+      totalHa > 0 &&
+      Math.abs(totalBruto - totalHa) < 1e-6 &&
+      haStoreConfiavel &&
+      Math.abs(haStore - totalHa) >= 1e-2
+    ) {
+      totalBruto = haStore;
+    }
+    return {
+      totalBruto,
+      unificadas: totalHa,
+      totalPois:
+        totalPoisApi > 0
+          ? totalPoisApi
+          : Number.isFinite(poisStore) && poisStore > 0
+            ? poisStore
+            : resumoBairros.totalPois ?? null,
+    };
+  }, [resumoBairros, ehVerbaDireta, data?.municipios, geocodeFocado]);
+
   return (
     <>
       <Head>
@@ -315,7 +473,20 @@ export default function ElNinoMapaPage() {
         <BreadcrumbHeader
           items={[
             { label: 'Principal', href: inicioPagina },
-            { label: 'El Niño Analytics', href: '/el-nino-analytics' },
+            {
+              label: 'El Niño Analytics',
+              href:
+                contratoIdEfetivo != null || geocodeEfetivo != null
+                  ? `/el-nino-analytics?${new URLSearchParams({
+                      ...(contratoIdEfetivo != null
+                        ? { contratoId: String(contratoIdEfetivo) }
+                        : {}),
+                      ...(geocodeEfetivo != null
+                        ? { geocode: String(geocodeEfetivo) }
+                        : {}),
+                    }).toString()}`
+                  : '/el-nino-analytics',
+            },
             { label: 'Mapa de Projeção' },
           ]}
         />
@@ -333,8 +504,13 @@ export default function ElNinoMapaPage() {
           >
             <ElNinoHeaderLegenda
               subtitulo={subtitulo}
-              mapaQuery={{ contratoId, geocode }}
+              mapaQuery={{
+                contratoId: contratoIdEfetivo,
+                geocode: geocodeEfetivo,
+                ...(modoGerencialTodos ? { visao: 'todos' as const } : {}),
+              }}
               voltarGerencial
+              esconderLegendaCores
             />
           </motion.div>
 
@@ -355,16 +531,7 @@ export default function ElNinoMapaPage() {
               data={data}
               geocodeSelecionado={geocodeFocado}
               mesNumSelecionado={mesNum}
-              hectaresAreaMapeada={
-                resumoBairros && ehVerbaDireta
-                  ? {
-                      totalBruto:
-                        resumoBairros.totalHaBruto ?? resumoBairros.totalHa,
-                      unificadas: resumoBairros.totalHa,
-                      totalPois: resumoBairros.totalPois ?? null,
-                    }
-                  : null
-              }
+              hectaresAreaMapeada={hectaresAreaMapeada}
             />
           </motion.div>
 
@@ -386,11 +553,7 @@ export default function ElNinoMapaPage() {
             </div>
           )}
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-          >
+          <div>
             <ElNinoMapaChoropleth
               data={data}
               loading={loading}
@@ -399,7 +562,7 @@ export default function ElNinoMapaPage() {
               onMesMudou={setMesNum}
               onMunicipioFocado={setGeocodeFocado}
               geocodeFocado={geocodeFocado}
-              contratoId={contratoId ?? data?._contrato_id ?? null}
+              contratoId={contratoIdEfetivo ?? data?._contrato_id ?? null}
               bairros={bairros}
               bairrosModo={bairrosModo}
               ehVerbaDireta={ehVerbaDireta}
@@ -411,10 +574,12 @@ export default function ElNinoMapaPage() {
                   : undefined
               }
               poligonosUnificadosKml={
-                contagemPoligonos?.unificados ?? bairros?.length ?? undefined
+                bairros?.length ? 1 : undefined
               }
+              visaoGerencial={modoGerencialTodos}
+              hectaresAreaMapeada={hectaresAreaMapeada}
             />
-          </motion.div>
+          </div>
 
         </div>
       </MainLayout>

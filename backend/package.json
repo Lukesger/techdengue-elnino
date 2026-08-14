@@ -7,7 +7,10 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
-    "start:prod": "node dist/main.js"
+    "start:prod": "node dist/main.js",
+    "el-nino:oni-atual": "node --use-system-ca scripts/consultar-oni-atual.js",
+    "el-nino:oni-atual:instalar-tarefa": "powershell -ExecutionPolicy Bypass -File scripts/install-oni-weekly-task.ps1",
+    "el-nino:oni-atual:remover-tarefa": "powershell -ExecutionPolicy Bypass -File scripts/install-oni-weekly-task.ps1 -Remove"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

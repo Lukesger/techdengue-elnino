@@ -51,9 +51,12 @@ function projecoesMun(mun: ProjecaoMunicipio) {
 function ProjecaoMunicipalSucinta({
   mun,
   data,
+  esconderResumo = false,
 }: {
   mun: ProjecaoMunicipio;
   data: MapaProjecaoResponse;
+  /** Quando o painel pai já mostra total/pop, evita duplicar rodapé. */
+  esconderResumo?: boolean;
 }) {
   const projecoes = mun.projecoes ?? [];
   const mesRef = data.meses?.[0];
@@ -69,38 +72,42 @@ function ProjecaoMunicipalSucinta({
 
   if (!projecoes.length) {
     return (
-      <p className="text-xs text-amber-600 py-4 text-center">
+      <p className="text-xs text-amber-600 py-2 text-center">
         Projeção mensal indisponível para este município.
       </p>
     );
   }
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
         {mesRef && (
           <>
-            <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+            <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md">
               El Niño: {mesRef.descricao ?? '—'}
             </span>
-            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-              Fator ×{mesRef.fElnino ?? '—'}
+            <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md">
+              ×{mesRef.fElnino ?? '—'}
             </span>
             {mesRef.oni != null && Number.isFinite(Number(mesRef.oni)) && (
-              <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md">
                 ONI {Number(mesRef.oni).toFixed(2)}
                 {mesRef.oniProjetado ? ' (proj.)' : ''}
               </span>
             )}
           </>
         )}
-        <span className="text-gray-500">
-          {populacao > 0 ? `Pop. ${populacao.toLocaleString('pt-BR')}` : null}
-          {mun.nivel_alerta != null ? ` · Alerta nível ${mun.nivel_alerta}` : ''}
-        </span>
+        {!esconderResumo && populacao > 0 && (
+          <span className="text-slate-500">
+            Pop. {populacao.toLocaleString('pt-BR')}
+          </span>
+        )}
+        {mun.nivel_alerta != null && (
+          <span className="text-slate-500">Alerta {mun.nivel_alerta}</span>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {projecoes.map((p) => {
           const valor = Number(p.valor) || 0;
           const cor = corPorValor(valor);
@@ -108,17 +115,17 @@ function ProjecaoMunicipalSucinta({
           return (
             <div
               key={p.mesNum}
-              className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2"
+              className="rounded-lg border border-slate-100 bg-slate-50/90 px-2 py-1.5"
             >
-              <p className="text-[10px] uppercase tracking-wide text-gray-400">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">
                 {mesLabel}
               </p>
-              <p className="text-lg font-semibold text-gray-800 tabular-nums">
+              <p className="text-sm font-semibold text-slate-800 tabular-nums mt-0.5 leading-tight">
                 {valor.toLocaleString('pt-BR')}
               </p>
-              <p className="text-[10px] text-gray-500 flex items-center gap-1">
+              <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
                 <span
-                  className="inline-block w-1.5 h-1.5 rounded-full"
+                  className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                   style={{ backgroundColor: cor }}
                 />
                 {getClassificacao(valor)}
@@ -128,25 +135,28 @@ function ProjecaoMunicipalSucinta({
         })}
       </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-gray-600 border-t border-gray-100 pt-2">
-        <span>
-          <strong className="text-gray-800">Total Jul–Dez:</strong>{' '}
-          {totalSemestre.toLocaleString('pt-BR')} casos
-        </span>
-        {pico && (
+      {!esconderResumo && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-600 border-t border-slate-100 pt-1.5">
           <span>
-            <strong className="text-gray-800">Pico:</strong>{' '}
-            {pico.label ?? ''} ({(Number(pico.valor) || 0).toLocaleString('pt-BR')})
+            <strong className="text-slate-800">Total:</strong>{' '}
+            {totalSemestre.toLocaleString('pt-BR')}
           </span>
-        )}
-        {mun.clima &&
-          mun.clima.temperatura_c != null &&
-          mun.clima.umidade_pct != null && (
-          <span className="text-gray-500">
-            Clima: {mun.clima.temperatura_c}°C · {mun.clima.umidade_pct}% UR
-          </span>
-        )}
-      </div>
+          {pico && (
+            <span>
+              <strong className="text-slate-800">Pico:</strong>{' '}
+              {pico.label ?? ''} (
+              {(Number(pico.valor) || 0).toLocaleString('pt-BR')})
+            </span>
+          )}
+          {mun.clima &&
+            mun.clima.temperatura_c != null &&
+            mun.clima.umidade_pct != null && (
+              <span className="text-slate-500">
+                Clima: {mun.clima.temperatura_c}°C · {mun.clima.umidade_pct}% UR
+              </span>
+            )}
+        </div>
+      )}
     </div>
   );
 }
@@ -165,43 +175,64 @@ function PainelMunicipioUnificado({
   casosConfirmados,
   rotuloConsorcio,
 }: PainelMunConsorcioProps) {
+  const totalProj = (mun.projecoes ?? []).reduce(
+    (s, p) => s + (Number(p.valor) || 0),
+    0,
+  );
+  const pop = Number(mun.populacao) || Number(mun.pop) || 0;
+
   return (
-    <div className="relative bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+    <article className="relative w-full rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
       <ElNinoGuiaGrafico chave="mapa-projecao" contexto={rotuloConsorcio} />
-      <header className="mb-4 pr-10">
-        <p className="text-xs font-medium uppercase tracking-wide text-[#0087a8]">
+
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 sm:px-4 py-2.5 border-b border-slate-100 bg-slate-50/80 pr-11">
+        <span className="inline-flex items-center rounded-md bg-[#0087a8]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#006d8a]">
           Visão municipal
-        </p>
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mt-0.5 leading-snug">
+        </span>
+        <h3 className="text-base font-semibold text-slate-900 leading-none">
           {mun.nome}
         </h3>
-        <p className="text-xs text-gray-400 mt-1">
-          Casos confirmados e projeção epidemiológica Jul–Dez/{data.ano_projecao}
-          {rotuloConsorcio ? ` · ${rotuloConsorcio}` : ''}
-        </p>
+        {rotuloConsorcio && (
+          <span className="text-[11px] text-slate-500 truncate max-w-[12rem]">
+            · {rotuloConsorcio}
+          </span>
+        )}
+        {pop > 0 && (
+          <span className="ml-auto text-[11px] text-slate-500 tabular-nums">
+            Pop. {pop.toLocaleString('pt-BR')}
+          </span>
+        )}
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-2 space-y-3">
-          <div className="rounded-xl bg-gradient-to-br from-red-50 to-orange-50 border border-red-100/80 px-4 py-3.5">
-            <p className="text-xs text-red-700/80 font-medium mb-1">Casos confirmados</p>
-            <p className="text-3xl sm:text-4xl font-bold text-red-700 tabular-nums tracking-tight">
+      <div className="p-3 sm:p-3.5 space-y-2.5">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-rose-100 bg-rose-50/70 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700/80">
+              Confirmados
+            </p>
+            <p className="text-2xl font-bold text-rose-700 tabular-nums leading-tight mt-0.5">
               {casosConfirmados.toLocaleString('pt-BR')}
             </p>
-            <p className="text-xs text-red-600/70 mt-1.5">
-              Acumulado histórico · notificados (Infodengue)
+            <p className="text-[10px] text-rose-700/65 mt-0.5">
+              Notificados · período do filtro
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Projeção Jul–Dez/{data.ano_projecao}
+            </p>
+            <p className="text-2xl font-bold text-slate-800 tabular-nums leading-tight mt-0.5">
+              {totalProj.toLocaleString('pt-BR')}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              Estimado · não soma aos confirmados
             </p>
           </div>
         </div>
 
-        <div className="lg:col-span-3 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-4">
-          <p className="text-xs font-medium text-gray-500 mb-2">
-            Projeção epidemiológica · El Niño + sazonalidade
-          </p>
-          <ProjecaoMunicipalSucinta mun={mun} data={data} />
-        </div>
+        <ProjecaoMunicipalSucinta mun={mun} data={data} esconderResumo />
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -250,9 +281,9 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-1/2 mb-4" />
-        <div className="h-48 bg-gray-100 rounded" />
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 animate-pulse w-full h-[min(34rem,calc(100vh-11rem))] shadow-sm">
+        <div className="h-5 bg-slate-200 rounded w-1/2 mb-4" />
+        <div className="h-48 bg-slate-100 rounded-xl" />
       </div>
     );
   }
@@ -333,9 +364,9 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
   });
 
   return (
-    <div className="relative bg-white rounded-xl border border-gray-100 p-4">
+    <div className="relative bg-white rounded-xl border border-gray-100 p-4 w-full h-[min(34rem,calc(100vh-11rem))] flex flex-col min-h-0">
       <ElNinoGuiaGrafico chave="mapa-projecao" contexto={data.rotulo_conjunto} />
-      <div className="flex items-center justify-between mb-3 pr-12">
+      <div className="flex items-center justify-between mb-3 pr-12 shrink-0">
         <div>
           <h3 className="text-sm font-semibold text-gray-800">
             Mapa de Projeção Epidemiológica {data.ano_projecao}
@@ -359,7 +390,7 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
       </div>
 
       {mesAtual && (
-        <div className="mb-3 flex items-center gap-2 text-xs flex-wrap">
+        <div className="mb-3 flex items-center gap-2 text-xs flex-wrap shrink-0">
           <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
             El Niño: {mesAtual.descricao}
           </span>
@@ -375,10 +406,10 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
         </div>
       )}
 
-      <div className="flex gap-4">
-        <div className="flex-1 overflow-auto max-h-72">
+      <div className="flex gap-4 flex-1 min-h-0">
+        <div className="flex-1 overflow-auto min-h-0 overscroll-contain">
           <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-gray-50">
+            <thead className="sticky top-0 bg-gray-50 z-[1]">
               <tr>
                 <th className="text-left px-2 py-1.5 text-gray-500 font-medium">Município</th>
                 <th className="text-right px-2 py-1.5 text-gray-500 font-medium">Casos proj.</th>
@@ -417,7 +448,7 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
         </div>
 
         {munSelecionado && (
-          <div className="w-48 flex-shrink-0 bg-gray-50 rounded-lg p-3 text-xs">
+          <div className="w-48 flex-shrink-0 bg-gray-50 rounded-lg p-3 text-xs overflow-y-auto min-h-0">
             <p className="font-semibold text-gray-800 mb-2">{munSelecionado.nome}</p>
             <p className="text-gray-500">
               Pop.: {(Number(munSelecionado.populacao) || 0).toLocaleString('pt-BR')}
@@ -447,7 +478,7 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
         )}
       </div>
 
-      <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+      <div className="flex items-center gap-3 mt-3 text-xs text-gray-500 shrink-0">
         {[
           { cor: '#4ade80', label: '< 100' },
           { cor: '#d97706', label: '100–199' },
@@ -464,7 +495,7 @@ export const ElNinoMapaProjecao: React.FC<Props> = ({
         ))}
       </div>
 
-      <p className="text-xs text-gray-400 mt-1">Fórmula: {data.formula?.expressao}</p>
+      <p className="text-xs text-gray-400 mt-1 shrink-0">Fórmula: {data.formula?.expressao}</p>
     </div>
   );
 };

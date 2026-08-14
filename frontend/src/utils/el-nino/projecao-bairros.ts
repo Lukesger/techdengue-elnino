@@ -1,5 +1,5 @@
 import { ProjecaoMes, ProjecaoMunicipio } from '@/services/el-nino-api';
-import { dissolverSobreposicoesEspaciais } from './unir-bairros';
+import { dissolverSobreposicoesEspaciais, extrairNomeBairroDeAreaMapeada } from './unir-bairros';
 
 export interface BairroPeso {
   nome: string;
@@ -194,6 +194,11 @@ export function isContratoVerbaDireta(
   return Number(c?.eConsorcio) === 0;
 }
 
+/**
+ * Exibe polígonos de area_mapeadas quando um município específico está em foco.
+ * Antes só em verba direta (eConsorcio=0); municípios de consórcio com GIS
+ * (ex.: São Francisco de Paula / contrato 20) também precisam do plot.
+ */
 export function deveExibirProjecaoBairros(
   geocodeFiltro: number | null,
   consorcioId: number | null,
@@ -201,7 +206,9 @@ export function deveExibirProjecaoBairros(
 ): boolean {
   if (geocodeFiltro == null) return false;
   if (isContratoVerbaDireta(consorcioId, consorcios)) return true;
-  return isGeocodeVerbaDireta(geocodeFiltro, consorcios);
+  if (isGeocodeVerbaDireta(geocodeFiltro, consorcios)) return true;
+  // Município único em foco (gestor municipal ou filtro geocode em consórcio)
+  return Number.isFinite(geocodeFiltro) && geocodeFiltro > 0;
 }
 
 export function municipioIdDeProjecao(mun: ProjecaoMunicipio): number | null {
@@ -299,7 +306,9 @@ export function montarAreasMapeadasDoGeojson(
   return validas.map((f) => {
     const areaId = lerNumero(f.properties.area_id);
     const chave = `__area_${areaId || f.properties.nome}__`;
-    const nome = formatarNomeBairro(String(f.properties.nome || `Área ${areaId}`));
+    const nome = extrairNomeBairroDeAreaMapeada(
+      String(f.properties.nome || `Área ${areaId}`),
+    );
     const hectaresUnicos = lerNumero(
       f.properties.hectaresUnicos ?? f.properties.hectares_unicos,
     );

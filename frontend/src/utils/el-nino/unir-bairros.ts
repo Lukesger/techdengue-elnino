@@ -159,8 +159,78 @@ function isNomeAreaGenerica(nome: string): boolean {
   return (
     /^ÁREA MAPEADA\s*\d*$/.test(n) ||
     /^AREA MAPEADA\s*\d*$/.test(n) ||
-    n === 'SEM BAIRRO'
+    n === 'SEM BAIRRO' ||
+    n === '[1:POLYGON]' ||
+    /^\[?\d+:POLYGON\]?$/.test(n)
   );
+}
+
+/**
+ * Extrai o nome de bairro a partir do `name` de area_mapeadas (atividade/camada).
+ * Ex.: "CONTAGEM_PETROLÂNDIA_(JUL.26) APROVADO" → "Petrolândia"
+ *      "PETROLÂNDIA (2ª CAMPANHA)" → "Petrolândia"
+ *      "CONTAGEM - INDUSTRIAL VILA DA PAZ (APROVADO)" → "Industrial Vila Da Paz"
+ */
+export function extrairNomeBairroDeAreaMapeada(nomeBruto: string): string {
+  let s = String(nomeBruto || '').trim();
+  if (!s) return 'Área mapeada';
+
+  s = s
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/\bMEDIDA\s+AREA\s+SOBREVOO\b/gi, ' ')
+    .replace(/\bAREA\s+SOBREVOO\b/gi, ' ')
+    .replace(/\bACAO\s*\d*\b/gi, ' ')
+    .replace(
+      /\b(APROVAD[OA]|P\.?\s*A\.?|AJUSTADO|AJUSTADA)\b/gi,
+      ' ',
+    )
+    .replace(
+      /\(\s*\d{1,2}[ªa]?\s*CAMPANHA\s*\)/gi,
+      ' ',
+    )
+    .replace(/\(\s*[\d.,]+\s*ha\s*\)/gi, ' ')
+    .replace(
+      /\(\s*(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)\.?\s*\d{2,4}\s*\)/gi,
+      ' ',
+    )
+    .replace(/[_/]+/g, ' ')
+    .replace(/\s*[-–—]\s*/g, ' - ')
+    .replace(/\(\s*\)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Remove prefixo do município quando houver trecho após ("Contagem - X" / "Contagem X")
+  const partesTraco = s.split(/\s+-\s+/).map((p) => p.trim()).filter(Boolean);
+  if (partesTraco.length >= 2) {
+    s = partesTraco.slice(1).join(' - ');
+  } else {
+    const tokens = s.split(/\s+/).filter(Boolean);
+    if (tokens.length >= 2 && /^(CONTAGEM|BETIM|IBIRITE|IBIRITÉ)$/i.test(tokens[0]!)) {
+      s = tokens.slice(1).join(' ');
+    }
+  }
+
+  s = s.replace(/\s+/g, ' ').trim();
+  if (!s || isNomeAreaGenerica(s)) return 'Área mapeada';
+
+  return s
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => {
+      if (!w) return w;
+      // Mantém abreviações curtas em maiúsculas (ex.: "a2")
+      if (/^[a-z]\d+$/i.test(w)) return w.toUpperCase();
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(' ');
+}
+
+/** Cobertura espacial da parte (ha da propriedade ou área geométrica). */
+function coberturaParte(p: Parte): number {
+  if (Number.isFinite(p.hectaresUnicos) && p.hectaresUnicos > 0) {
+    return p.hectaresUnicos;
+  }
+  return poligonoArea(p.poly);
 }
 
 function bboxPoligono(poly: PolygonSimples): GeoJSON.BBox {
@@ -639,38 +709,60 @@ export function dissolverSobreposicoesEspaciais(
 
     let pois = 0;
     let nomeDominante = partes[indices[0]!]!.nome;
-    let maxHa = -1;
+    let maxCobertura = -1;
     let metodoAtribuicao = 'area_mapeada_sem_overlap';
     let fonteGeom = partes[indices[0]!]?.fonteGeom ?? 'area_mapeadas';
     let criterioAtribuicao =
       partes[indices[0]!]?.criterioAtribuicao ?? 'uniao_sobreposicao';
 
+    // Bairro com maior cobertura no cluster unificado (ha / área geométrica).
+    const coberturaPorBairro = new Map<string, { nome: string; cobertura: number }>();
+
     for (const idx of indices) {
       const p = partes[idx]!;
       pois += p.pois;
-      if (p.hectaresUnicos >= maxHa) {
-        maxHa = p.hectaresUnicos;
+      const cob = coberturaParte(p);
+      if (cob >= maxCobertura) {
+        maxCobertura = cob;
         nomeDominante = p.nome;
+      }
+      const bairro = extrairNomeBairroDeAreaMapeada(p.nome);
+      const chave = chaveBairro(bairro);
+      const prev = coberturaPorBairro.get(chave);
+      coberturaPorBairro.set(chave, {
+        nome: bairro,
+        cobertura: (prev?.cobertura ?? 0) + cob,
+      });
+    }
+
+    let melhorBairro = extrairNomeBairroDeAreaMapeada(nomeDominante);
+    let melhorCob = -1;
+    for (const item of coberturaPorBairro.values()) {
+      if (item.cobertura > melhorCob) {
+        melhorCob = item.cobertura;
+        melhorBairro = item.nome;
       }
     }
 
     const hectaresUnicos = hectaresDeGeometria(geometry);
-
-    if (indices.length > 1) {
-      nomeDominante =
-        indices.length === 2
-          ? `Áreas unificadas (${nomeDominante})`
-          : `Áreas unificadas (${indices.length})`;
-    }
+    const nomeExibicao =
+      melhorBairro && melhorBairro !== 'Área mapeada'
+        ? melhorBairro
+        : indices.length > 1
+          ? `Áreas unificadas (${indices.length})`
+          : extrairNomeBairroDeAreaMapeada(nomeDominante);
 
     out.push({
       properties: {
-        nome: nomeDominante,
+        nome: nomeExibicao,
         pois,
         hectaresUnicos,
         metodoAtribuicao,
         fonteGeom,
-        criterioAtribuicao,
+        criterioAtribuicao:
+          indices.length > 1
+            ? `uniao_sobreposicao>bairro_maior_cobertura:${melhorBairro}`
+            : criterioAtribuicao,
       },
       geometry,
     });
