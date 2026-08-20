@@ -292,6 +292,92 @@ export function hoverInfoDeProps(
   };
 }
 
+/** Primeiro id numérico válido em `props` (ex.: fid / geocode). */
+export function idNumericoDeProps(
+  props: Record<string, unknown> | null | undefined,
+  keys: string[],
+): number | null {
+  for (const k of keys) {
+    const n = Number(props?.[k]);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function sinalDelta(n: number): string {
+  return n > 0 ? '+' : '';
+}
+
+export function textoElevacaoInsight(
+  unico: boolean,
+  nome: string,
+  delta: number,
+  fmt: (n: number) => string,
+): { titulo: string; valor: string; detalhe: string } {
+  if (unico) {
+    return {
+      titulo: 'Efeito El Niño',
+      valor: `+${fmt(delta)} casos`,
+      detalhe: 'a mais neste mês por causa do El Niño',
+    };
+  }
+  return {
+    titulo: 'Elevação El Niño',
+    valor: `${nome}: +${fmt(delta)}`,
+    detalhe: 'vs. cenário sem El Niño',
+  };
+}
+
+export function textoSaltoInsight(
+  unico: boolean,
+  nome: string,
+  deltaMes: number,
+  fmt: (n: number) => string,
+): { titulo: string; valor: string; detalhe: string } {
+  const sinal = sinalDelta(deltaMes);
+  if (unico) {
+    return {
+      titulo: 'Vs. mês anterior',
+      valor: `${sinal}${fmt(deltaMes)} casos`,
+      detalhe:
+        deltaMes > 0 ? 'acima do mês passado' : 'abaixo do mês passado',
+    };
+  }
+  return {
+    titulo: 'Maior salto',
+    valor: `${nome}: ${sinal}${fmt(deltaMes)}`,
+    detalhe: 'vs. mês anterior',
+  };
+}
+
+export function textoHectaresInsightUnico(
+  u: InsightUnico,
+  fmt: (n: number) => string,
+  fmtHa: (n: number) => string,
+): string {
+  const base = `${fmt(u.projetado)} casos`;
+  const semEn =
+    u.deltaElnino > 0 ? ` (seriam ${fmt(u.baseSemElnino)} sem EN)` : '';
+  if (
+    u.mapeado &&
+    u.hectares != null &&
+    u.hectares > 0
+  ) {
+    const ha = u.hectares;
+    const bruto = u.hectaresBruto;
+    const mostraUnifBruto =
+      u.hectaresFonte === 'unificado' &&
+      bruto != null &&
+      Math.abs(bruto - ha) >= 0.01;
+    if (mostraUnifBruto) {
+      return `${base}${semEn} · unif. ${fmtHa(ha)} · bruto ${fmtHa(bruto)}`;
+    }
+    return `${base}${semEn} · ${fmtHa(ha)} mapeados`;
+  }
+  if (u.mapeado) return `${base}${semEn} · mapeado TD`;
+  return `${base}${semEn} · sem mapeamento TD`;
+}
+
 export function montarInsightsMapa(params: {
   data: MapaProjecaoResponse | null | undefined;
   mesNumSelecionado: number | null;
