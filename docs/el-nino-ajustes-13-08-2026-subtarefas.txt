@@ -1,16 +1,40 @@
-================================================================================
+﻿================================================================================
 El Niño Analytics — ajustes UX/clareza e ONI (13/08/2026)
 Projeto sugerido: PT — Plataforma TechDengue
 Tipo pai sugerido: Melhoria (ou Tarefa)
-Branches: fix/el-nino-card-home-gestao (FE) | feat/elnino-read-all-perfis (BE)
+Status do pacote: REALIZADO (local + PRs abertos)
 ================================================================================
+
+BRANCHES E PRS
+--------------
+Frontend (techdengue_frontend):
+  - Card original (sem pacote UX): fix/el-nino-card-home-gestao
+    PR: https://github.com/AERO-ENGENHARIA/techdengue_frontend/pull/31
+    Base: main
+  - Pacote El Niño (trabalho local): local/el-nino-ajustes-13-08
+    PR: https://github.com/AERO-ENGENHARIA/techdengue_frontend/pull/33
+    Base: feat/implementacao-completa-el-nino  (NÃO main)
+
+Backend (techdenguebackend):
+  - Pacote El Niño (trabalho local): local/el-nino-ajustes-13-08
+    PR: https://github.com/AERO-ENGENHARIA/techdenguebackend/pull/58
+    Base: feat/implementacao-completa-el-nino  (NÃO main)
+
+Monorepo demo (techdengue-elnino / Lukesger):
+  - Branch: feat/el-nino-ajustes-13-08-2026
+  - PR: https://github.com/Lukesger/techdengue-elnino/pull/3
+  - Base: main (portfólio)
+
+feat/implementacao-completa-el-nino (FE/BE AERO):
+  - Alinhada à main como base limpa para receber o PR local.
+
 
 PACOTE PAI
 ----------
 Título:
   El Niño Analytics — ajustes UX/clareza e ONI (13/08/2026)
 
-Natureza: FE + BE (pacote misto)
+Natureza: FE + BE + OPS + DX + QUALIDADE + GIT
 
 Descrição:
   Pacote de ajustes do dashboard e do mapa de projeção El Niño, a partir do
@@ -18,7 +42,9 @@ Descrição:
   Inclui redesign de KPIs, clarificação da métrica de correlação, reorganização
   de layout, atualização semanal do ONI, melhorias no mapa de projeção
   (header, cards, legenda gerencial, hectares), correção do reload periódico
-  em dev (cache fora de src/) e nome de bairro no shape unificado.
+  em dev (cache fora de src/), nome de bairro no shape unificado, integração
+  da main local, higiene de migrations, correções Sonar e abertura dos PRs
+  no fluxo local → feat/implementacao-completa-el-nino.
 
 
 LEGENDA DE NATUREZA
@@ -28,13 +54,18 @@ LEGENDA DE NATUREZA
   FE+BE  = Frontend e Backend
   OPS    = Operação/infra local (script, cron Windows, agendamento)
   DX     = Developer experience / confiabilidade em desenvolvimento
+  QUAL   = Qualidade (Sonar / limpeza cognitiva sem mudar comportamento)
+  GIT    = Git/GitHub (branches, PRs, sincronização com main)
+  DEMO   = Monorepo público techdengue-elnino (portfólio)
 
 
-SUBTAREFAS
-----------
+================================================================================
+SUBTAREFAS — PACOTE ORIGINAL (1–14) — TODAS REALIZADAS
+================================================================================
 
-1) Redesign dos 5 cards KPI (Resumo)
-Natureza: FE
+1) [FE] Redesign dos 5 cards KPI (Resumo)
+Status: FEITO
+Onde: techdengue_frontend (+ espelho monorepo)
 Descrição:
   Reformular o design dos 5 cards de KPI do bloco Resumo (`ElNinoKpiCards`),
   alinhando tipografia, hierarquia visual, espaçamento e linguagem ao restante
@@ -42,8 +73,9 @@ Descrição:
   de dashboard sobrecarregado.
 
 
-2) Guia "!" da correlação ONI × casos
-Natureza: FE
+2) [FE] Guia "!" da correlação ONI × casos
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Adicionar botão "!" (`ElNinoGuiaGrafico`) no card de correlação com guia
   `kpi-correlacao-oni` em linguagem simples (não técnica).
@@ -53,67 +85,75 @@ Descrição:
   Painel do "!" via portal + `position: fixed` para não ficar sob a nav sticky.
 
 
-3) Remover aside de correlação dos filtros
-Natureza: FE
+3) [FE] Remover aside de correlação dos filtros
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Remover o bloco/aside de correlação embutido em `ElNinoFiltrosTerritorial`,
   evitando duplicidade com o card de correlação do Resumo e reduzindo ruído
   na área de filtros.
 
 
-4) Layout: Resumo (KPIs) acima dos Filtros
-Natureza: FE
+4) [FE] Layout: Resumo (KPIs) acima dos Filtros
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Inverter a ordem da página `el-nino-analytics/index.tsx` para:
   Resumo (KPIs) → Filtros → demais seções.
   Objetivo: o usuário ver o contexto numérico antes de interagir com filtros.
 
 
-5) Perfil mensal com período histórico fixo
-Natureza: FE
+5) [FE] Perfil mensal com período histórico fixo
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Ajustar `ElNinoPerfilMensal` para usar período histórico fixo (mesmo padrão
   do pós-pico ONI), consumindo `mensalMunCompleto`, em vez de seguir o recorte
   temporal do filtro global quando isso distorce a leitura do perfil.
 
 
-6) KPI ONI com mês/ano do último dado NOAA
-Natureza: BE
+6) [BE] KPI ONI com mês/ano do último dado NOAA
+Status: FEITO
+Onde: techdenguebackend (+ monorepo `_reference`)
 Descrição:
   Atualizar subtítulo do KPI ONI no backend/controller para exibir algo como:
   "Dados de Jun/YYYY · último ONI NOAA disponível".
   Deixa explícita a temporalidade do valor exibido (ex.: jun/2026).
 
 
-7) Script + agendamento semanal de atualização do ONI
-Natureza: BE + OPS
+7) [BE + OPS] Script + agendamento semanal de atualização do ONI
+Status: FEITO
+Onde: techdenguebackend (+ monorepo)
 Descrição:
   Criar/usar script `scripts/consultar-oni-atual.js` (`npm run el-nino:oni-atual`)
   para obter mês/valor atual do ONI.
   Agendar execução semanal:
-  - Nest cron `el-nino-oni-semanal` (ex.: segunda 05:00) — BE
+  - Nest cron / auto-sync ONI semanal — BE
   - tarefa Windows `TechDengue-ONI-Semanal` (install script) — OPS
   Persistir snapshot em `data/el-nino/oni_atual.json`.
 
 
-8) Mapa: header limpo (voltar/legenda)
-Natureza: FE
+8) [FE] Mapa: header limpo (voltar/legenda)
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Em `ElNinoHeaderLegenda`, remover título "TechDengue…" e subtítulo.
   Manter barra enxuta apenas com voltar/legenda, reduzindo ruído no primeiro
   viewport do mapa de projeção.
 
 
-9) Mapa: KPIs do topo no estilo Resumo (compactos)
-Natureza: FE
+9) [FE] Mapa: KPIs do topo no estilo Resumo (compactos)
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Reformular `ElNinoMapaKpisTopo` no mesmo idioma visual dos cards do Resumo
   e, em seguida, compactar espaçamento (menos whitespace) para caber melhor
   acima do mapa.
 
 
-10) Mapa: choropleth — chips, insights e título
-Natureza: FE
+10) [FE] Mapa: choropleth — chips, insights e título
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Em `ElNinoMapaChoropleth`:
   - header com chips
@@ -122,25 +162,28 @@ Descrição:
   Melhorar hierarquia visual da área do mapa.
 
 
-11) Legenda TD só em visão gerencial
-Natureza: FE
+11) [FE] Legenda TD só em visão gerencial
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Exibir a legenda "Sem mapeamento TD / Casos / Mapeado TD" apenas quando
   `visaoGerencial` estiver ativa. Em visão não gerencial, ocultar para evitar
   confusão com usuários sem esse contexto.
 
 
-12) Alinhar hectares do insight "Neste mês" com o KPI
-Natureza: FE
+12) [FE] Alinhar hectares do insight "Neste mês" com o KPI
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Parar de usar o valor aproximado (~27.600 ha) vindo de outra fonte da API no
   insight "Neste mês".
   Passar a usar a mesma fonte PostGIS do KPI (`hectaresAreaMapeada`: unif. /
-  bruto, ex.: 3.659,62 / 5.209,69), garantindo consistência entre card e insight.
+  bruto), garantindo consistência entre card e insight.
 
 
-13) Eliminar reload periódico em dev (cache fora de src/)
-Natureza: FE + DX
+13) [FE + DX] Eliminar reload periódico em dev (cache fora de src/)
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   Causa: BFF Next gravava JSON runtime dentro de `src/utils/el-nino/data/`,
   e o Fast Refresh fazia full reload da página.
@@ -154,26 +197,221 @@ Descrição:
   Critério: navegação/API em `npm run dev` sem full reload por gravação de cache.
 
 
-14) Painel do mapa: nome do bairro com maior cobertura no shape unificado
-Natureza: FE
+14) [FE] Painel do mapa: nome do bairro com maior cobertura no shape unificado
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
 Descrição:
   O painel lateral (`ElNinoMapaChoropleth`) exibia o `name` bruto da camada
-  em area_mapeadas (ex.: "Áreas Unificadas (contagem_petrolândia_(jul.26)
-  Aprovado)").
+  em area_mapeadas.
   Ajuste em `dissolverSobreposicoesEspaciais` / `extrairNomeBairroDeAreaMapeada`:
-  - analisar cobertura espacial (ha / área geométrica) de cada polígono do
-    cluster unificado
+  - analisar cobertura espacial de cada polígono do cluster unificado
   - extrair o nome de bairro limpo da atividade/camada
-  - exibir o bairro com maior cobertura (ex.: "Petrolândia")
+  - exibir o bairro com maior cobertura
   Aplicar também em montagem de áreas/geojson e areasIdentificacao.
 
 
+================================================================================
+SUBTAREFAS — CONTINUAÇÃO (15+) — REALIZADAS NESTA SESSÃO / FOLLOW-UPS
+================================================================================
+
+15) [FE + QUAL] Extrair helpers de gráficos (PerfilMensal + index)
+Status: FEITO
+Onde: techdengue_frontend (+ monorepo)
+Descrição:
+  Reduzir complexidade cognitiva Sonar extraindo
+  `montarPerfilMensalChart` / helpers e `montar-dados-graficos.ts`
+  (`montarDadosGraficosElNino`) sem mudar o contrato funcional dos gráficos.
+
+
+16) [FE + QUAL] Sonar: Promise em conditional (S6544)
+Status: FEITO
+Onde: monorepo (espelhado no FE onde aplicável)
+Descrição:
+  Corrigir bugs de Reliability: comparações booleanas com Promise
+  (`probeInFlight != null`, `warmUpEmAndamento != null`).
+
+
+17) [BE + FE + QUAL] Sonar: cors.config `.map(Number)` + geometrias verba direta
+Status: FEITO
+Onde: BE `cors.config.ts` | FE `carregar-geometrias-verba-direta.ts` (+ monorepo)
+Descrição:
+  - BE: `.map((p) => Number(p))` → `.map(Number)`
+  - FE: extrair helpers (`resolverHaBrutoPreferencial`, etc.) para baixar
+    complexidade e ternários aninhados, sem mudar ordem de preferência
+    PostGIS/store.
+
+
+18) [FE + QUAL] Sonar críticos: Choropleth + PerfilMensal
+Status: FEITO
+Onde: monorepo (e espelho parcial no FE)
+Descrição:
+  - Novo `mapa-choropleth-helpers.ts`: `centroideGeometry`, `montarInsightsMapa`,
+    `hoverInfoDeProps`, etc.
+  - Remover `void cameraTick` (deps do useMemo já invalidam)
+  - `handleMouseMove` extraído
+  - `ElNinoPerfilMensal` com helpers + `PerfilMensalChart` de apresentação
+  Commit único no PR monorepo #3 (tip consolidado).
+
+
+19) [GIT + FE + BE] Integrar main atual no local (FE e BE) preservando WIP El Niño
+Status: FEITO
+Onde: techdengue_frontend | techdenguebackend
+Descrição:
+  Fetch/merge de `origin/main` nas branches de trabalho, com stash/restore
+  do WIP El Niño. Main remota NÃO alterada.
+  FE: merge na linha do card/implementacao.
+  BE: fast-forward até main + restore do WIP (ONI, CORS, auto-sync).
+
+
+20) [BE + DX] Renumerar migration local area_mapeadas (077 → 080)
+Status: FEITO
+Onde: techdenguebackend (arquivo local + gitignore)
+Descrição:
+  Na main já existiam 077 LGPD RIPD, 078 El Niño read-all, 079 LGPD consent.
+  Migration local de `public.area_mapeadas` renumerada para
+  `080-create-area-mapeadas-local.ts` (`CreateAreaMapeadasLocal080…`).
+  Mantida no `.gitignore` (local-only).
+  Registro na tabela `migrations` local atualizado 077→080.
+
+
+21) [GIT] Abrir / retarget PRs AERO (fluxo correto)
+Status: FEITO
+Onde: GitHub AERO-ENGENHARIA
+Descrição:
+  Fluxo final desejado:
+  - PR card sem pacote UX: #31 (fix/el-nino-card-home-gestao → main)
+  - PRs do pacote: #33 FE e #58 BE
+    head `local/el-nino-ajustes-13-08` → base `feat/implementacao-completa-el-nino`
+  PRs incorretos para main (#32/#57 e intermediários #29/#30/#56) fechados.
+  `feat/implementacao-completa-el-nino` alinhada à main como base limpa.
+
+
+22) [DEMO + GIT] Monorepo portfólio — PR único com pacote
+Status: FEITO
+Onde: Lukesger/techdengue-elnino PR #3
+Descrição:
+  Commit único na branch `feat/el-nino-ajustes-13-08-2026` com o pacote
+  UX/ONI/cache + correções Sonar. Quality Gate SonarCloud passou no tip.
+
+
+23) [FE (produto)] Esclarecimento de produto: umidade do KPI
+Status: FEITO (documentação / alinhamento)
+Onde: conversa + comportamento já existente no painel
+Descrição:
+  Confirmado: umidade do KPI é UR atual Open-Meteo (`clima.atual.umidade_pct`),
+  não média mensal. Maior umidade (~60%+) com calor ≈ cenário mais favorável
+  ao Aedes (contexto epidemiológico, não mudança de código nesta subtarefa).
+
+
+================================================================================
+SUBTAREFAS — 18/08/2026 — REALIZADAS HOJE (PD-326)
+================================================================================
+Jira pai: https://laura-almeida.atlassian.net/browse/PD-326
+  [TECHDENGUE] - El Niño — filtros reativos + clarificar temporalidade/métricas dos cards
+Status Jira do pai: Desenvolvimento
+Commits de hoje:
+  FE 78efac2e — feat(el-nino): alinha mapa, KPIs e cache gerencial
+     PR: https://github.com/AERO-ENGENHARIA/techdengue_frontend/pull/33
+  BE 79f06ea6 — feat(el-nino): KPI El Nino ativo, ONI NOAA com retry SSL e CORS LAN
+     PR: https://github.com/AERO-ENGENHARIA/techdenguebackend/pull/58
+
+
+24) [FE] Mapa: remover chips ONI, fator × e N áreas mapeadas do header
+Status: FEITO (18/08/2026)
+Onde: techdengue_frontend — ElNinoMapaChoropleth.tsx
+Descrição:
+  Header do choropleth fica só com voltar / seletor de mês / KML / rótulo do
+  conjunto, no modelo do último PR (sem chips ONI, fator e “N áreas mapeadas”).
+
+
+25) [FE] KPIs gerenciais: último mês de casos via Infodengue (live)
+Status: FEITO (18/08/2026)
+Onde: techdengue_frontend
+Descrição:
+  Enriquecer o KPI de casos do último mês com janela recente Infodengue
+  (`enriquecer-casos-ultimo-mes-live.ts`, `montar-kpis.ts`, `ElNinoKpiCards`,
+  `infodengue-fallback.ts`).
+
+
+26) [FE] KPI de temperatura por URS/consórcio
+Status: FEITO (18/08/2026)
+Onde: techdengue_frontend — temperatura-urs.ts
+Descrição:
+  Temperatura do Resumo gerencial por URS/consórcio, com fallback Infodengue
+  na janela recente.
+
+
+27) [FE] Cache da malha gerencial só grava malha completa (single-flight)
+Status: FEITO (18/08/2026)
+Onde: techdengue_frontend — visao-gerencial-local.ts
+Descrição:
+  Single-flight; só persiste malha com ≥800 features. Evita cache truncado
+  em `visao=todos` (polígonos IBGE incompletos).
+
+
+28) [FE] ONI fallback atualizado (jun/2026) no histórico local
+Status: FEITO (18/08/2026)
+Onde: techdengue_frontend — oni-historico-fallback.ts
+Descrição:
+  Histórico local de ONI alinhado ao último dado NOAA disponível (jun/2026)
+  para o KPI não cair em mês antigo quando a NOAA falha.
+
+
+29) [FE + QUAL] Scripts de verificação dos KPIs (último mês e temperatura)
+Status: FEITO (18/08/2026)
+Onde: techdengue_frontend — scripts/
+Descrição:
+  - scripts/test-el-nino-kpis-ultimo-mes.js
+  - scripts/test-el-nino-kpis-temp-consorcio.js
+
+
+30) [BE] KPI “El Niño Ativo” (Sim/Não) com último ONI NOAA ordenado por data
+Status: FEITO (18/08/2026)
+Onde: techdenguebackend — el-nino-analytics.controller.ts
+Descrição:
+  Card passa de “ONI / El Niño” numérico para “El Nino Ativo” Sim/Não.
+  Último ONI ordenado por ano/mês; subtítulo com valor ONI, mês/ano e
+  classificação (quando não Neutro).
+
+
+31) [BE] Retry SSL no fetch ASCII da NOAA (ONI)
+Status: FEITO (18/08/2026)
+Onde: techdenguebackend — noaa-oni.service.ts
+Descrição:
+  Se o fetch ASCII falhar por certificado intermediário, segunda tentativa
+  (ambiente local). Não altera o contrato da API.
+
+
+32) [BE + OPS] CORS de desenvolvimento para origem HTTP em IP privado da LAN
+Status: FEITO (18/08/2026)
+Onde: techdenguebackend — cors.config.ts + cors.config.spec.ts
+Descrição:
+  Em NODE_ENV=development, permite origem HTTP em IPv4 privado (10/8,
+  172.16/12, 192.168/16, link-local). Produção continua bloqueando LAN
+  sem allowlist.
+
+
+33) [GIT] Push + atualizar PRs AERO do pacote (FE #33 e BE #58)
+Status: FEITO (18/08/2026)
+Onde: GitHub AERO-ENGENHARIA
+Descrição:
+  Push de `local/el-nino-ajustes-13-08` nos dois repos; PRs atualizados
+  (base `feat/implementacao-completa-el-nino`). Sentry, cidadão, LGPD 077
+  e dumps locais ficaram de fora de propósito.
+
+
+================================================================================
 RESUMO POR NATUREZA
--------------------
-  FE ........ 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 14
-  BE ........ 6
-  BE + OPS .. 7
-  FE + DX ... 13
+================================================================================
+  FE .............. 1–5, 8–12, 14, 15, 23, 24–28
+  BE .............. 6, 20, 30, 31
+  BE + OPS ........ 7, 32
+  FE + DX ......... 13
+  FE + QUAL ....... 15, 16, 18, 29
+  BE + FE + QUAL .. 17
+  GIT ............. 19, 21, 33
+  DEMO + GIT ...... 22
+  BE + DX ......... 20
 
 
 ARQUIVOS PRINCIPAIS TOCADOS
@@ -187,10 +425,22 @@ Frontend (FE):
   - src/components/el-nino/ElNinoHeaderLegenda.tsx
   - src/components/el-nino/ElNinoMapaKpisTopo.tsx
   - src/components/el-nino/ElNinoMapaChoropleth.tsx
+  - src/components/el-nino/ElNinoMapaProjecao.tsx
+  - src/components/el-nino/ElNinoPosPicoOni.tsx
+  - src/components/layout/Sidebar.tsx (card/atalho onde aplicável)
   - src/pages/el-nino-analytics/index.tsx
   - src/pages/el-nino-analytics/mapa.tsx
+  - src/pages/api/el-nino-analytics/[...slug].ts
   - src/utils/el-nino/cache-paths.ts (novo)
+  - src/utils/el-nino/montar-dados-graficos.ts (novo)
+  - src/utils/el-nino/mapa-choropleth-helpers.ts (novo no monorepo; espelho FE se aplicado)
   - src/utils/el-nino/visao-gerencial-local.ts
+  - src/utils/el-nino/enriquecer-casos-ultimo-mes-live.ts (novo, 18/08)
+  - src/utils/el-nino/temperatura-urs.ts (novo, 18/08)
+  - src/utils/el-nino/montar-kpis.ts
+  - src/utils/el-nino/oni-historico-fallback.ts
+  - scripts/test-el-nino-kpis-ultimo-mes.js (18/08)
+  - scripts/test-el-nino-kpis-temp-consorcio.js (18/08)
   - src/utils/el-nino/painel-nao-mapeado-cache.ts
   - src/utils/el-nino/infodengue-fallback.ts
   - src/utils/el-nino/clima-nao-mapeado-local.ts
@@ -203,11 +453,32 @@ Frontend (FE):
 
 Backend (BE):
   - src/interfaces/controllers/el-nino-analytics.controller.ts
+  - src/application/services/el-nino-analytics/noaa-oni.service.ts (retry SSL, 18/08)
   - src/application/services/el-nino-analytics/el-nino-auto-sync.service.ts
+  - src/main.ts
+  - src/shared/config/cors.config.ts
+  - src/shared/config/cors.config.spec.ts
   - scripts/consultar-oni-atual.js
   - scripts/install-oni-weekly-task.ps1 (OPS)
+  - scripts/run-oni-atual-weekly.cmd (OPS)
+  - scripts/sql/076-elnino-read-all-perfis.sql (referência; TypeORM oficial = 078 na main)
+  - migrations/080-create-area-mapeadas-local.ts (local-only, gitignore)
   - package.json
+  - .gitignore
+
+Monorepo (DEMO):
+  - frontend/* (espelho do pacote)
+  - backend/_reference/* (cors, controller, auto-sync)
+  - docs/el-nino-ajustes-13-08-2026-subtarefas.txt
+
+
+PRS FECHADOS / SUPERADOS (referência)
+-------------------------------------
+  FE #23  — fechado (não reabriu); conteúdo original → #31
+  FE #29, #30, #32 — fechados (retarget / branch errada)
+  BE #56, #57 — fechados (retarget para base implementacao)
+
 
 ================================================================================
-Fim do arquivo
+Fim do arquivo — atualizado em 18/08/2026 (subtarefas 24–33)
 ================================================================================

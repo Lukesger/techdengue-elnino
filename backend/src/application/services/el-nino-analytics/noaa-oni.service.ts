@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
+import * as https from 'node:https';
 import { CacheService } from '../../../shared/services/cache.service';
 import {
   ANO_FIM,
@@ -76,7 +77,23 @@ export class NoaaOniService {
         (r) => r.ano >= ANO_INICIO && r.ano <= ANO_FIM,
       );
     } catch (err) {
-      this.logger.debug(`ONI ascii indisponível: ${(err as Error).message}`);
+      if (this.isErroCertificadoSsl(err)) {
+        this.logger.warn(
+          'ONI ascii: falha SSL, tentando novamente sem verificação de certificado',
+        );
+        try {
+          const texto = await this.fetchOniAscii(false);
+          linhas = this.parseOniAscii(texto).filter(
+            (r) => r.ano >= ANO_INICIO && r.ano <= ANO_FIM,
+          );
+        } catch (errSsl) {
+          this.logger.debug(
+            `ONI ascii indisponível após retry SSL: ${(errSsl as Error).message}`,
+          );
+        }
+      } else {
+        this.logger.debug(`ONI ascii indisponível: ${(err as Error).message}`);
+      }
     }
 
     if (!linhas?.length) {
@@ -160,11 +177,38 @@ export class NoaaOniService {
       .sort((a, b) => a.ano - b.ano);
   }
 
-  private async fetchOniAscii(): Promise<string> {
+  private isErroCertificadoSsl(err: unknown): boolean {
+    const textos: string[] = [];
+    const coletar = (valor: unknown, profundidade = 0): void => {
+      if (valor == null || profundidade > 3) return;
+      if (typeof valor === 'string') {
+        textos.push(valor);
+        return;
+      }
+      if (typeof valor !== 'object') return;
+      const e = valor as {
+        message?: string;
+        code?: string;
+        cause?: unknown;
+      };
+      if (e.message) textos.push(e.message);
+      if (e.code) textos.push(e.code);
+      if (e.cause) coletar(e.cause, profundidade + 1);
+    };
+    coletar(err);
+    return /unable to verify the first certificate|self signed certificate|UNABLE_TO_VERIFY_LEAF_SIGNATURE/i.test(
+      textos.join(' '),
+    );
+  }
+
+  private async fetchOniAscii(rejectUnauthorized = true): Promise<string> {
     const res = await firstValueFrom(
       this.http.get<string>(ENDPOINTS.NOAA_ONI_TXT, {
         responseType: 'text' as never,
         timeout: 30000,
+        httpsAgent: rejectUnauthorized
+          ? undefined
+          : new https.Agent({ rejectUnauthorized: false }),
       }),
     );
     return String(res.data ?? '');

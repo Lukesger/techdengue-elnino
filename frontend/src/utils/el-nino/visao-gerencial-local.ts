@@ -10,7 +10,7 @@
  *
  * Fonte: agregação dos pipeline_v2_cache_*.json (seed) + malha_mg_ibge.json
  */
-import fs from 'fs';
+import fs from 'node:fs';
 import {
   RUNTIME_DIR_RELATIVO,
   escreverJsonAtomico,
@@ -53,6 +53,10 @@ let cacheOverviewMemoria: {
 
 /** Single-flight do warm-up por processo. */
 let warmUpEmAndamento: Promise<void> | null = null;
+
+/** Single-flight do mapa gerencial (warm-up e 1ª request compartilham). */
+let mapaBuildEmAndamento: Promise<Record<string, unknown> | null> | null =
+  null;
 
 function garantirDir(): void {
   garantirDirRuntime('visao_gerencial');
@@ -103,6 +107,7 @@ export function invalidarCacheMapaGerencial(): void {
   cacheMapaMemoria = null;
   cacheOverviewMemoria = null;
   warmUpEmAndamento = null;
+  mapaBuildEmAndamento = null;
   try {
     for (const f of [FILE_OVERVIEW, FILE_MAPA, FILE_META]) {
       if (fs.existsSync(f)) fs.unlinkSync(f);
@@ -110,6 +115,11 @@ export function invalidarCacheMapaGerencial(): void {
   } catch {
     /* ignore */
   }
+  import('./enriquecer-casos-ultimo-mes-live')
+    .then((m) => m.invalidarCacheUltimoMesCasos())
+    .catch(() => {
+      /* ignore */
+    });
 }
 
 function carregarOverviewFixo(): Record<string, unknown> | null {
@@ -151,64 +161,160 @@ async function montarMapaGerencialComMalha(): Promise<Record<string, unknown> | 
   if (
     cacheMapaMemoria &&
     cacheMapaMemoria.expiraEm > Date.now() &&
-    (cacheMapaMemoria.payload.geojson as { features?: unknown[] } | undefined)
-      ?.features?.length
+    ((cacheMapaMemoria.payload.geojson as { features?: unknown[] } | undefined)
+      ?.features?.length ?? 0) >= 800
   ) {
     return cacheMapaMemoria.payload;
   }
 
-  const meta = lerJsonDisco<MetaDisco>(FILE_META);
-  if (metaValida(meta)) {
-    const disco = lerJsonDisco<Record<string, unknown>>(FILE_MAPA);
-    const nFeats =
-      (disco?.geojson as { features?: unknown[] } | undefined)?.features
-        ?.length ?? 0;
-    if (nFeats >= 800) {
-      const expiraEm = Date.parse(meta!.expira_em);
-      cacheMapaMemoria = { payload: disco!, expiraEm };
-      return disco;
+  if (mapaBuildEmAndamento != null) return mapaBuildEmAndamento;
+
+  mapaBuildEmAndamento = (async () => {
+    const meta = lerJsonDisco<MetaDisco>(FILE_META);
+    if (metaValida(meta)) {
+      const disco = lerJsonDisco<Record<string, unknown>>(FILE_MAPA);
+      const nFeats =
+        (disco?.geojson as { features?: unknown[] } | undefined)?.features
+          ?.length ?? 0;
+      if (nFeats >= 800) {
+        const expiraEm = Date.parse(meta!.expira_em);
+        cacheMapaMemoria = { payload: disco!, expiraEm };
+        return disco;
+      }
     }
-  }
 
-  let payload = montarMapaProjecaoTodosContratos() as Record<
-    string,
-    unknown
-  > | null;
-  if (!payload) return null;
+    let payload = montarMapaProjecaoTodosContratos() as Record<
+      string,
+      unknown
+    > | null;
+    if (!payload) return null;
 
-  payload = anexarPoiHectareNoMapaPayload(payload);
-  try {
-    payload = await anexarMalhaIbgeGerencial(payload);
-  } catch (err) {
-    console.warn(
-      '[visao-gerencial] malha IBGE:',
-      (err as Error)?.message ?? err,
-    );
-  }
+    payload = anexarPoiHectareNoMapaPayload(payload);
+    try {
+      payload = await anexarMalhaIbgeGerencial(payload);
+    } catch (err) {
+      console.warn(
+        '[visao-gerencial] malha IBGE:',
+        (err as Error)?.message ?? err,
+      );
+    }
 
-  const expiraEm = Date.now() + CACHE_TTL_MS;
-  cacheMapaMemoria = { payload, expiraEm };
-  escreverJsonDisco(FILE_MAPA, payload);
+    const nFeatures =
+      (payload.geojson as { features?: unknown[] } | undefined)?.features
+        ?.length ?? 0;
+    const expiraEm = Date.now() + CACHE_TTL_MS;
 
-  const nFeatures =
-    (payload.geojson as { features?: unknown[] } | undefined)?.features
-      ?.length ?? 0;
-  const metaAtual = lerJsonDisco<MetaDisco>(FILE_META) ?? {
-    atualizado_em: new Date().toISOString(),
-    expira_em: new Date(expiraEm).toISOString(),
+    if (nFeatures >= 800) {
+      cacheMapaMemoria = { payload, expiraEm };
+      escreverJsonDisco(FILE_MAPA, payload);
+      const metaAtual = lerJsonDisco<MetaDisco>(FILE_META) ?? {
+        atualizado_em: new Date().toISOString(),
+        expira_em: new Date(expiraEm).toISOString(),
+      };
+      escreverJsonDisco(FILE_META, {
+        ...metaAtual,
+        atualizado_em: new Date().toISOString(),
+        expira_em: new Date(expiraEm).toISOString(),
+        n_features_malha: nFeatures,
+      } satisfies MetaDisco);
+      console.info(
+        `[visao-gerencial] mapa gravado em disco (${nFeatures} features) → ${FILE_MAPA}`,
+      );
+    } else {
+      console.warn(
+        `[visao-gerencial] malha incompleta (${nFeatures} features) — não grava cache`,
+      );
+    }
+
+    return payload;
+  })().finally(() => {
+    mapaBuildEmAndamento = null;
+  });
+
+  return mapaBuildEmAndamento;
+}
+
+function aplicarOniNasSeries(
+  out: Record<string, unknown>,
+  oniMap: Map<string, number>,
+): Record<string, unknown> {
+  if (!oniMap.size || !Array.isArray(out.df_serie)) return out;
+  const mapRow = (r: Record<string, unknown>) => {
+    const k = `${Number(r.Ano)}-${Number(r.MesNum)}`;
+    const oni = oniMap.get(k);
+    return oni != null ? { ...r, ONI: oni } : r;
   };
-  escreverJsonDisco(FILE_META, {
-    ...metaAtual,
-    atualizado_em: new Date().toISOString(),
-    expira_em: new Date(expiraEm).toISOString(),
-    n_features_malha: nFeatures,
-  } satisfies MetaDisco);
+  return {
+    ...out,
+    df_serie: out.df_serie.map(mapRow),
+    df_serie_ponderada: Array.isArray(out.df_serie_ponderada)
+      ? out.df_serie_ponderada.map(mapRow)
+      : out.df_serie_ponderada,
+  };
+}
 
-  console.info(
-    `[visao-gerencial] mapa gravado em disco (${nFeatures} features) → ${FILE_MAPA}`,
-  );
+async function enriquecerOverviewLocal(
+  dados: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  try {
+    const { aplicarHistoricoConsolidado } = await import(
+      './historico-casos-consolidado'
+    );
+    const { enriquecerPacoteComOniNoaa } = await import('./enriquecer-oni-live');
+    const { aplicarHistoricoAnualNoPacote } = await import('./historico-anual');
+    let out = aplicarHistoricoConsolidado(dados);
+    out = await enriquecerPacoteComOniNoaa(out);
+    const oniMap = new Map(
+      (out.oni_mensal ?? []).map(
+        (o: { ano: number; mes: number; oni: number }) => [
+          `${o.ano}-${o.mes}`,
+          o.oni,
+        ],
+      ),
+    );
+    out = aplicarOniNasSeries(out, oniMap);
+    return aplicarHistoricoAnualNoPacote(out);
+  } catch {
+    return dados;
+  }
+}
 
-  return payload;
+async function enriquecerBaseSerieLocal(
+  dados: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  try {
+    const { aplicarHistoricoConsolidado } = await import(
+      './historico-casos-consolidado'
+    );
+    const { enriquecerPacoteComOniNoaa } = await import('./enriquecer-oni-live');
+    const { aplicarHistoricoAnualNoPacote } = await import('./historico-anual');
+    return aplicarHistoricoAnualNoPacote(
+      await enriquecerPacoteComOniNoaa(aplicarHistoricoConsolidado(dados)),
+    );
+  } catch {
+    return dados;
+  }
+}
+
+async function montarKpisLocais(
+  dados: Record<string, unknown>,
+): Promise<{ kpis: ReturnType<typeof montarKpis> }> {
+  let enriquecido = dados;
+  try {
+    const { enriquecerPacoteComOniNoaa } = await import('./enriquecer-oni-live');
+    enriquecido = await enriquecerPacoteComOniNoaa(enriquecido);
+  } catch {
+    /* ONI live opcional */
+  }
+  try {
+    const { enriquecerPacoteComCasosUltimoMes } = await import(
+      './enriquecer-casos-ultimo-mes-live'
+    );
+    enriquecido = await enriquecerPacoteComCasosUltimoMes(enriquecido);
+  } catch {
+    /* Infodengue live opcional — snapshot permanece */
+  }
+  return { kpis: montarKpis(enriquecido) };
 }
 
 /**
@@ -225,71 +331,14 @@ export async function tentarResponderVisaoGerencialLocal(
     case 'escopo':
       return montarEscopoTodosContratos();
 
-    case 'overview': {
-      try {
-        const { aplicarHistoricoConsolidado } = await import(
-          './historico-casos-consolidado'
-        );
-        const { enriquecerPacoteComOniNoaa } = await import(
-          './enriquecer-oni-live'
-        );
-        let out = aplicarHistoricoConsolidado(dados);
-        out = await enriquecerPacoteComOniNoaa(out);
-        const oniMap = new Map(
-          (out.oni_mensal ?? []).map(
-            (o: { ano: number; mes: number; oni: number }) => [
-              `${o.ano}-${o.mes}`,
-              o.oni,
-            ],
-          ),
-        );
-        if (oniMap.size && Array.isArray(out.df_serie)) {
-          out = {
-            ...out,
-            df_serie: out.df_serie.map((r: Record<string, unknown>) => {
-              const k = `${Number(r.Ano)}-${Number(r.MesNum)}`;
-              const oni = oniMap.get(k);
-              return oni != null ? { ...r, ONI: oni } : r;
-            }),
-            df_serie_ponderada: Array.isArray(out.df_serie_ponderada)
-              ? out.df_serie_ponderada.map((r: Record<string, unknown>) => {
-                  const k = `${Number(r.Ano)}-${Number(r.MesNum)}`;
-                  const oni = oniMap.get(k);
-                  return oni != null ? { ...r, ONI: oni } : r;
-                })
-              : out.df_serie_ponderada,
-          };
-        }
-        const { aplicarHistoricoAnualNoPacote } = await import(
-          './historico-anual'
-        );
-        return aplicarHistoricoAnualNoPacote(out);
-      } catch {
-        return dados;
-      }
-    }
+    case 'overview':
+      return enriquecerOverviewLocal(dados);
 
     case 'kpis':
-      return { kpis: montarKpis(dados) };
+      return montarKpisLocais(dados);
 
     case 'serie-consorcio': {
-      let base = dados;
-      try {
-        const { aplicarHistoricoConsolidado } = await import(
-          './historico-casos-consolidado'
-        );
-        const { enriquecerPacoteComOniNoaa } = await import(
-          './enriquecer-oni-live'
-        );
-        const { aplicarHistoricoAnualNoPacote } = await import(
-          './historico-anual'
-        );
-        base = aplicarHistoricoAnualNoPacote(
-          await enriquecerPacoteComOniNoaa(aplicarHistoricoConsolidado(dados)),
-        );
-      } catch {
-        base = dados;
-      }
+      const base = await enriquecerBaseSerieLocal(dados);
       return montarSerieConsorcio(
         base,
         'Todos os contratos · Minas Gerais',
@@ -365,6 +414,27 @@ export async function tentarResponderVisaoGerencialLocal(
   }
 }
 
+function agendarRebuildCasosUltimoMes(
+  dados: Record<string, unknown> | null,
+): void {
+  if (!dados) return;
+  import('./enriquecer-casos-ultimo-mes-live')
+    .then((m) => {
+      const geocodes = (
+        (dados.municipios as Array<{ geocode?: number }> | undefined) ?? []
+      )
+        .map((x) => Number(x.geocode))
+        .filter((g) => Number.isFinite(g) && g > 0);
+      m.agendarRebuildUltimoMesCasos(geocodes);
+    })
+    .catch((err) => {
+      console.warn(
+        '[visao-gerencial] agendar último mês casos:',
+        (err as Error)?.message ?? err,
+      );
+    });
+}
+
 /**
  * Warm-up: materializa overview + mapa em disco (1ª request / boot).
  * Single-flight + no-op se meta/disco já válidos (evita write → Fast Refresh).
@@ -380,6 +450,9 @@ export function aquecerCacheVisaoGerencial(): void {
       // hidrata memória sem regravar disco
       carregarOverviewFixo();
     }
+    agendarRebuildCasosUltimoMes(
+      cacheOverviewMemoria?.payload ?? carregarOverviewFixo(),
+    );
     return;
   }
 
@@ -387,8 +460,12 @@ export function aquecerCacheVisaoGerencial(): void {
 
   warmUpEmAndamento = Promise.resolve()
     .then(async () => {
-      if (cacheDiscoPronto()) return;
-      carregarOverviewFixo();
+      if (cacheDiscoPronto()) {
+        agendarRebuildCasosUltimoMes(carregarOverviewFixo());
+        return;
+      }
+      const dados = carregarOverviewFixo();
+      agendarRebuildCasosUltimoMes(dados);
       await montarMapaGerencialComMalha();
       console.info(
         `[visao-gerencial] pré-cache pronto → ${RUNTIME_DIR_RELATIVO}/visao_gerencial`,

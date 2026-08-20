@@ -170,17 +170,34 @@ function agregarSemanasMensal(
   return map;
 }
 
+/** Semana epidemiológica aproximada (ISO-like) do calendário atual. */
+function semanaEpiAtual(agora = new Date()): number {
+  const ano = agora.getFullYear();
+  const jan4 = new Date(Date.UTC(ano, 0, 4));
+  const dow = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - dow + 1);
+  const diffDays = Math.floor(
+    (Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()) -
+      monday.getTime()) /
+      86400000,
+  );
+  return Math.max(1, Math.min(53, Math.floor(diffDays / 7) + 1));
+}
+
 async function buscarSemanasInfodengue(
   geocode: number,
   eyStart: number,
   eyEnd: number,
+  ewStart = 1,
+  ewEnd = 53,
 ): Promise<RegistroSemanal[]> {
   const url = new URL(ALERTCITY);
   url.searchParams.set('geocode', String(geocode));
   url.searchParams.set('disease', 'dengue');
   url.searchParams.set('format', 'json');
-  url.searchParams.set('ew_start', '1');
-  url.searchParams.set('ew_end', '53');
+  url.searchParams.set('ew_start', String(ewStart));
+  url.searchParams.set('ew_end', String(ewEnd));
   url.searchParams.set('ey_start', String(eyStart));
   url.searchParams.set('ey_end', String(eyEnd));
 
@@ -191,6 +208,25 @@ async function buscarSemanasInfodengue(
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : [];
+}
+
+/** Últimas N semanas epidemiológicas (cruza virada de ano se preciso). */
+async function buscarSemanasJanelaRecente(
+  geocode: number,
+  janelaSemanas: number,
+): Promise<RegistroSemanal[]> {
+  const span = Math.max(1, Math.min(53, Math.round(janelaSemanas)));
+  const week = semanaEpiAtual();
+  const ano = new Date().getFullYear();
+  if (week > span) {
+    return buscarSemanasInfodengue(geocode, ano, ano, week - span, week);
+  }
+  const prevStart = Math.max(1, 53 - (span - week));
+  const [prev, cur] = await Promise.all([
+    buscarSemanasInfodengue(geocode, ano - 1, ano - 1, prevStart, 53),
+    buscarSemanasInfodengue(geocode, ano, ano, 1, week),
+  ]);
+  return [...prev, ...cur];
 }
 
 function paraLinhasMensais(
@@ -227,7 +263,7 @@ function paraLinhasMensais(
 export async function buscarCasosMensaisInfodengue(
   geocode: number,
   municipio?: string,
-  opts?: { allowLive?: boolean },
+  opts?: { allowLive?: boolean; janelaSemanas?: number },
 ): Promise<any[]> {
   const gc = Number(geocode);
   const nome = municipio || buscarNomeMunicipioLista(gc) || `Município ${gc}`;
@@ -261,9 +297,15 @@ export async function buscarCasosMensaisInfodengue(
   }
 
   try {
-    // 2 anos recentes + consolidado histórico — bem mais rápido que 2020→hoje.
-    const anoLiveInicio = Math.max(ANO_INICIO, ANO_FIM - 1);
-    const semanas = await buscarSemanasInfodengue(gc, anoLiveInicio, ANO_FIM);
+    const janela = Number(opts?.janelaSemanas);
+    const semanas =
+      Number.isFinite(janela) && janela > 0
+        ? await buscarSemanasJanelaRecente(gc, janela)
+        : await buscarSemanasInfodengue(
+            gc,
+            Math.max(ANO_INICIO, ANO_FIM - 1),
+            ANO_FIM,
+          );
     const live = paraLinhasMensais(gc, nome, semanas);
     const rows = mesclarLinhas(consolidado, live);
     if (rows.length) {

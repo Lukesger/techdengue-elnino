@@ -494,13 +494,13 @@ export const GUIAS_GRAFICOS: Record<GuiaChave, GuiaGrafico> = {
         marcador: 'verde',
         rotulo: 'Como ler o valor',
         texto:
-          'Perto de zero: quase não há ligação clara. Mais perto de 1: os dois costumam subir juntos. Valor negativo: um sobe quando o outro cai.',
+          'Perto de zero: quase não há ligação clara. Mais perto de 1: os dois costumam subir juntos. Valor negativo: um sobe e o outro cai.',
       },
       {
         marcador: 'amarelo',
         rotulo: 'Não é chance por pessoa',
         texto:
-          'Não diz a probabilidade de alguém adoecer. Também não é o total de casos do mês — só a relação entre clima oceânico e casos.',
+          'Não indica a chance de alguém adoecer nem o total de casos do mês. Mostra só se o clima oceânico e os casos caminham juntos.',
       },
       {
         marcador: 'laranja',

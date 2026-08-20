@@ -31,12 +31,6 @@ import {
   type AreaIdentificavel,
 } from '@/utils/el-nino/unir-bairros';
 import {
-  centroideGeometry,
-  hoverInfoDeProps,
-  montarInsightsMapa,
-  type HoverInfoMapa,
-} from '@/utils/el-nino/mapa-choropleth-helpers';
-import {
   FaTimes,
   FaThermometerHalf,
   FaCloudRain,
@@ -471,6 +465,97 @@ function nomeDaFeatureMalha(f: GeoJSON.Feature): string {
     .toLowerCase();
 }
 
+/** Centro visual do polígono (anel maior + correção se cair fora). */
+function centroideGeometry(
+  geometry: GeoJSON.Geometry | null | undefined,
+): [number, number] | null {
+  if (!geometry) return null;
+
+  const aneis: number[][][] = [];
+  if (geometry.type === 'Polygon') {
+    const ring = geometry.coordinates[0];
+    if (ring?.length) aneis.push(ring as number[][]);
+  } else if (geometry.type === 'MultiPolygon') {
+    for (const poly of geometry.coordinates) {
+      const ring = poly[0];
+      if (ring?.length) aneis.push(ring as number[][]);
+    }
+  } else {
+    return null;
+  }
+  if (!aneis.length) return null;
+
+  let melhor: { ring: number[][]; area: number; cx: number; cy: number } | null =
+    null;
+
+  for (const ring of aneis) {
+    if (ring.length < 3) continue;
+    let area2 = 0;
+    let cx = 0;
+    let cy = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      const x0 = ring[i]![0]!;
+      const y0 = ring[i]![1]!;
+      const x1 = ring[i + 1]![0]!;
+      const y1 = ring[i + 1]![1]!;
+      const cross = x0 * y1 - x1 * y0;
+      area2 += cross;
+      cx += (x0 + x1) * cross;
+      cy += (y0 + y1) * cross;
+    }
+    const area = area2 / 2;
+    const abs = Math.abs(area);
+    if (abs < 1e-18) continue;
+    const candidato = {
+      ring,
+      area: abs,
+      cx: cx / (6 * area),
+      cy: cy / (6 * area),
+    };
+    if (!melhor || candidato.area > melhor.area) melhor = candidato;
+  }
+
+  if (!melhor) return null;
+
+  let ponto: [number, number] = [melhor.cx, melhor.cy];
+  if (pontoEmGeometry(ponto[0], ponto[1], geometry)) return ponto;
+
+  // Centróide fora (côncavo): busca ponto interior perto do centro.
+  let minLng = Infinity;
+  let minLat = Infinity;
+  let maxLng = -Infinity;
+  let maxLat = -Infinity;
+  for (const pt of melhor.ring) {
+    const lng = pt[0];
+    const lat = pt[1];
+    if (lng == null || lat == null) continue;
+    if (lng < minLng) minLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lng > maxLng) maxLng = lng;
+    if (lat > maxLat) maxLat = lat;
+  }
+  if (!Number.isFinite(minLng)) return ponto;
+
+  let melhorDentro: [number, number] | null = null;
+  let melhorDist = Infinity;
+  const passos = 9;
+  for (let iy = 0; iy <= passos; iy++) {
+    for (let ix = 0; ix <= passos; ix++) {
+      const lng = minLng + ((maxLng - minLng) * ix) / passos;
+      const lat = minLat + ((maxLat - minLat) * iy) / passos;
+      if (!pontoEmGeometry(lng, lat, geometry)) continue;
+      const d =
+        (lng - melhor.cx) * (lng - melhor.cx) +
+        (lat - melhor.cy) * (lat - melhor.cy);
+      if (d < melhorDist) {
+        melhorDist = d;
+        melhorDentro = [lng, lat];
+      }
+    }
+  }
+  return melhorDentro ?? ponto;
+}
+
 /** Bounding box aproximada de Minas Gerais (WGS84). */
 const MG_BBOX = {
   minLng: -51.2,
@@ -591,7 +676,19 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
   const [hovered, setHovered] = useState<number | null>(null);
   const [bairroFocadoIdx, setBairroFocadoIdx] = useState<number | null>(null);
   const [painelMunAberto, setPainelMunAberto] = useState(false);
-  const [hoverInfo, setHoverInfo] = useState<HoverInfoMapa | null>(null);
+  const [hoverInfo, setHoverInfo] = useState<{
+    nome: string;
+    valor: number;
+    casosRegistrados?: number;
+    impacto?: number;
+    fElnino?: number;
+    oni?: number | null;
+    hectaresUnicos?: number | null;
+    somenteProjecao?: boolean;
+    naoMapeado?: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const modoBairros = Boolean(bairros && bairros.length);
 
@@ -888,24 +985,183 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
   }, [geojsonEnriquecido, data?.municipios]);
 
   /** Insights: elevação El Niño, salto mês a mês; Top 3 só com ≥4 mun; card próprio se 1 mun. */
-  const insightsMapa = useMemo(
-    () =>
-      montarInsightsMapa({
-        data,
-        mesNumSelecionado,
-        projecoesMap,
-        hectaresAreaMapeada,
-        deltaImpactoElnino,
-        dadosPoiHa,
-        municipioFoiMapeado,
-      }),
-    [
-      data,
-      mesNumSelecionado,
-      projecoesMap,
-      hectaresAreaMapeada,
-    ],
-  );
+  const insightsMapa = useMemo(() => {
+    type InsightMun = {
+      nome: string;
+      geocode: number;
+      delta: number;
+      valor: number;
+    };
+    type InsightSalto = {
+      nome: string;
+      geocode: number;
+      deltaMes: number;
+      valor: number;
+    };
+    type InsightUnico = {
+      nome: string;
+      geocode: number;
+      projetado: number;
+      baseSemElnino: number;
+      deltaElnino: number;
+      pctElnino: number | null;
+      fElnino: number;
+      mapeado: boolean;
+      totalPois: number | null;
+      hectares: number | null;
+      hectaresBruto: number | null;
+      hectaresFonte: 'unificado' | 'bruto' | 'api';
+    };
+
+    const vazio = {
+      maiorElevacao: null as InsightMun | null,
+      maiorSalto: null as InsightSalto | null,
+      concentracaoTop3Pct: null as number | null,
+      totalProjetado: 0,
+      nMapeados: 0,
+      nMunicipios: 0,
+      unicoMun: null as InsightUnico | null,
+    };
+
+    if (!data?.municipios?.length || mesNumSelecionado == null) {
+      return vazio;
+    }
+
+    const nMunicipios = data.municipios.length;
+    const mesesOrdenados = [...(data.meses ?? [])].sort(
+      (a, b) => a.mesNum - b.mesNum,
+    );
+    const idxMes = mesesOrdenados.findIndex(
+      (m) => m.mesNum === mesNumSelecionado,
+    );
+    const mesAnterior =
+      idxMes > 0 ? mesesOrdenados[idxMes - 1]!.mesNum : null;
+
+    let maiorElevacao: InsightMun | null = null;
+    let maiorSalto: InsightSalto | null = null;
+    let totalProjetado = 0;
+    let nMapeados = 0;
+    const valoresMes: Array<{ geocode: number; nome: string; valor: number }> =
+      [];
+
+    for (const mun of data.municipios) {
+      const gc = Number(mun.geocode);
+      const hit = projecoesMap.get(gc);
+      const valor = Math.max(0, Math.round(Number(hit?.valor) || 0));
+      const fElnino = Number(hit?.fElnino) || 1;
+      const delta = deltaImpactoElnino(valor, fElnino);
+      totalProjetado += valor;
+      if (municipioFoiMapeado(mun)) nMapeados += 1;
+      valoresMes.push({ geocode: gc, nome: mun.nome, valor });
+
+      if (!maiorElevacao || delta > maiorElevacao.delta) {
+        maiorElevacao = { nome: mun.nome, geocode: gc, delta, valor };
+      }
+
+      if (mesAnterior != null) {
+        const ant = mun.projecoes.find((p) => p.mesNum === mesAnterior);
+        const vAnt = Math.max(0, Math.round(Number(ant?.valor) || 0));
+        const deltaMes = valor - vAnt;
+        if (!maiorSalto || deltaMes > maiorSalto.deltaMes) {
+          maiorSalto = {
+            nome: mun.nome,
+            geocode: gc,
+            deltaMes,
+            valor,
+          };
+        }
+      }
+    }
+
+    // Top 3 só faz sentido com vários municípios no escopo.
+    const concentracaoTop3Pct =
+      nMunicipios >= 4 && totalProjetado > 0
+        ? Math.round(
+            ([...valoresMes]
+              .sort((a, b) => b.valor - a.valor)
+              .slice(0, 3)
+              .reduce((s, m) => s + m.valor, 0) /
+              totalProjetado) *
+              1000,
+          ) / 10
+        : null;
+
+    let unicoMun: InsightUnico | null = null;
+    if (nMunicipios === 1) {
+      const mun = data.municipios[0]!;
+      const gc = Number(mun.geocode);
+      const hit = projecoesMap.get(gc);
+      const projetado = Math.max(0, Math.round(Number(hit?.valor) || 0));
+      const fElnino = Number(hit?.fElnino) || 1;
+      const deltaElnino = deltaImpactoElnino(projetado, fElnino);
+      const baseSemElnino = Math.max(0, projetado - deltaElnino);
+      const poi = dadosPoiHa(mun);
+      // PostGIS unificado (KPI) tem prioridade sobre hectares_mapeados da API
+      // (pode contar sobreposição e inflar o total).
+      const haUnif = Number(hectaresAreaMapeada?.unificadas);
+      const haBruto = Number(hectaresAreaMapeada?.totalBruto);
+      const hectaresPreferidos =
+        Number.isFinite(haUnif) && haUnif > 0
+          ? haUnif
+          : Number.isFinite(haBruto) && haBruto > 0
+            ? haBruto
+            : poi.hectares != null
+              ? Number(poi.hectares)
+              : null;
+      const totalPoisPreferidos =
+        hectaresAreaMapeada?.totalPois != null &&
+        Number(hectaresAreaMapeada.totalPois) > 0
+          ? Number(hectaresAreaMapeada.totalPois)
+          : poi.totalPois;
+      unicoMun = {
+        nome: mun.nome,
+        geocode: gc,
+        projetado,
+        baseSemElnino,
+        deltaElnino,
+        pctElnino:
+          projetado > 0 && deltaElnino !== 0
+            ? Math.round((deltaElnino / projetado) * 1000) / 10
+            : null,
+        fElnino,
+        mapeado: municipioFoiMapeado(mun) || (hectaresPreferidos != null && hectaresPreferidos > 0),
+        totalPois: totalPoisPreferidos,
+        hectares: hectaresPreferidos,
+        hectaresBruto:
+          Number.isFinite(haBruto) && haBruto > 0 ? haBruto : null,
+        hectaresFonte:
+          Number.isFinite(haUnif) && haUnif > 0
+            ? 'unificado'
+            : Number.isFinite(haBruto) && haBruto > 0
+              ? 'bruto'
+              : 'api',
+      };
+    }
+
+    return {
+      maiorElevacao:
+        maiorElevacao && maiorElevacao.delta > 0 ? maiorElevacao : null,
+      // 1 mun: qualquer variação (sobe/desce); vários: só o maior salto positivo.
+      maiorSalto:
+        maiorSalto &&
+        (nMunicipios === 1
+          ? maiorSalto.deltaMes !== 0
+          : maiorSalto.deltaMes > 0)
+          ? maiorSalto
+          : null,
+      concentracaoTop3Pct,
+      totalProjetado,
+      nMapeados,
+      nMunicipios,
+      unicoMun,
+    };
+  }, [
+    data?.municipios,
+    data?.meses,
+    mesNumSelecionado,
+    projecoesMap,
+    hectaresAreaMapeada,
+  ]);
 
   const modoBairrosEfetivo = Boolean(
     modoBairros && bairrosGeojson && !bairrosLoading,
@@ -1090,7 +1346,6 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
     if (!map?.project) {
       return { limiteFill: '', limiteLinha: '', areas: [] as Array<{ d: string; cor: string; key: string }> };
     }
-    // cameraTick está nas deps: pan/zoom recompõe os paths SVG.
     const project: ProjetoLngLat = ([lng, lat]) => {
       const p = map.project!({ lng, lat });
       return { x: p.x, y: p.y };
@@ -1467,62 +1722,6 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
     ],
   );
 
-  const handleMouseMove = useCallback(
-    (e: MapMouseEvent) => {
-      const map = e.target;
-
-      if (modoBairrosEfetivo) {
-        const { lng, lat } = e.lngLat;
-        const hit = resolverBairroNoEvento(lng, lat);
-        setHovered(hit?.idx ?? null);
-        setHoverInfo(null);
-        map.getCanvas().style.cursor = hit ? 'pointer' : 'default';
-        return;
-      }
-
-      if (usarOverlaySvg) {
-        const { lng, lat } = e.lngLat;
-        const feat =
-          geojsonAtivo?.features.find(
-            (f) => f.geometry && pontoEmGeometry(lng, lat, f.geometry),
-          ) ?? null;
-        if (!feat) {
-          setHovered(null);
-          setHoverInfo(null);
-          map.getCanvas().style.cursor = '';
-          return;
-        }
-        const props = (feat.properties ?? {}) as Record<string, unknown>;
-        const fid = Number(props.fid ?? props.geocode);
-        setHovered(Number.isFinite(fid) ? fid : null);
-        setHoverInfo(hoverInfoDeProps(props, e.point.x, e.point.y));
-        map.getCanvas().style.cursor = 'pointer';
-        return;
-      }
-
-      const feats =
-        e.features?.length ? e.features : featuresNoPonto(map, e.point);
-      const feat = feats[0];
-      if (!feat) {
-        setHovered(null);
-        setHoverInfo(null);
-        map.getCanvas().style.cursor = '';
-        return;
-      }
-      const props = feat.properties as Record<string, unknown>;
-      const fid = Number(props?.fid);
-      setHovered(Number.isFinite(fid) ? fid : null);
-      setHoverInfo(hoverInfoDeProps(props, e.point.x, e.point.y));
-      map.getCanvas().style.cursor = 'pointer';
-    },
-    [
-      modoBairrosEfetivo,
-      resolverBairroNoEvento,
-      usarOverlaySvg,
-      geojsonAtivo,
-    ],
-  );
-
   const initialView = useMemo(() => {
     if (data?.municipios?.length === 1) {
       const mun = data.municipios[0]!;
@@ -1629,13 +1828,6 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
   }
 
   const nKml = poligonosUnificadosKml ?? bairros?.length ?? 0;
-  const rotuloAreas = modoBairrosEfetivo
-    ? bairrosModo === 'areas_mapeadas'
-      ? 'áreas mapeadas'
-      : bairrosModo === 'indisponivel'
-        ? 'áreas indisponíveis'
-        : 'envoltória POIs'
-    : null;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
@@ -1644,27 +1836,6 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
           <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 truncate max-w-[14rem]">
             {data.rotulo_conjunto}
           </span>
-          {mesElninoMeta?.oni != null && (
-            <span
-              className="inline-flex items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-900 tabular-nums"
-              title="Oceanic Niño Index (NOAA)"
-            >
-              ONI {fmtOni(mesElninoMeta.oni)}
-            </span>
-          )}
-          {mesElninoMeta?.fElnino != null && (
-            <span
-              className="inline-flex items-center rounded-md border border-orange-200/80 bg-orange-50 px-2 py-1 text-[11px] font-medium text-orange-900 tabular-nums"
-              title="Fator multiplicador do El Niño na projeção"
-            >
-              fator {fmtFator(mesElninoMeta.fElnino)}
-            </span>
-          )}
-          {modoBairrosEfetivo && (
-            <span className="inline-flex items-center rounded-md border border-[#0087a8]/20 bg-[#0087a8]/[0.07] px-2 py-1 text-[11px] font-medium text-[#006d8a]">
-              {bairros?.length ?? 0} {rotuloAreas}
-            </span>
-          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
@@ -1873,7 +2044,81 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
             window.setTimeout(forcarPinturaMapa, 400);
           }}
           onClick={handleClick}
-          onMouseMove={handleMouseMove}
+          onMouseMove={(e) => {
+            const map = e.target;
+
+            if (modoBairrosEfetivo) {
+              const { lng, lat } = e.lngLat;
+              const hit = resolverBairroNoEvento(lng, lat);
+              setHovered(hit?.idx ?? null);
+              setHoverInfo(null);
+              map.getCanvas().style.cursor = hit ? 'pointer' : 'default';
+              return;
+            }
+
+            if (usarOverlaySvg) {
+              const { lng, lat } = e.lngLat;
+              const feat =
+                geojsonAtivo?.features.find(
+                  (f) => f.geometry && pontoEmGeometry(lng, lat, f.geometry),
+                ) ?? null;
+              if (feat) {
+                const props = (feat.properties ?? {}) as Record<string, unknown>;
+                const fid = Number(props?.fid ?? props?.geocode);
+                setHovered(Number.isFinite(fid) ? fid : null);
+                setHoverInfo({
+                  nome: String(props?.nome ?? props?.name ?? 'Município'),
+                  valor: Number(props?.valor_proj ?? 0),
+                  casosRegistrados: Number(props?.casos_registrados ?? 0),
+                  impacto: Number(props?.impacto_elnino ?? 0),
+                  fElnino: Number(props?.f_elnino ?? 0) || undefined,
+                  oni:
+                    props?.oni != null && Number.isFinite(Number(props.oni))
+                      ? Number(props.oni)
+                      : null,
+                  naoMapeado: Number(props?.mapeado) === 0,
+                  x: e.point.x,
+                  y: e.point.y,
+                });
+                map.getCanvas().style.cursor = 'pointer';
+              } else {
+                setHovered(null);
+                setHoverInfo(null);
+                map.getCanvas().style.cursor = '';
+              }
+              return;
+            }
+
+            const feats =
+              e.features?.length ? e.features : featuresNoPonto(map, e.point);
+            const feat = feats[0];
+            if (feat) {
+              const props = feat.properties as Record<string, unknown>;
+              const fid = Number(props?.fid);
+              setHovered(Number.isFinite(fid) ? fid : null);
+              setHoverInfo({
+                nome: String(
+                  props?.nome ?? props?.name ?? 'Município',
+                ),
+                valor: Number(props?.valor_proj ?? 0),
+                casosRegistrados: Number(props?.casos_registrados ?? 0),
+                impacto: Number(props?.impacto_elnino ?? 0),
+                fElnino: Number(props?.f_elnino ?? 0) || undefined,
+                oni:
+                  props?.oni != null && Number.isFinite(Number(props.oni))
+                    ? Number(props.oni)
+                    : null,
+                naoMapeado: Number(props?.mapeado) === 0,
+                x: e.point.x,
+                y: e.point.y,
+              });
+              map.getCanvas().style.cursor = 'pointer';
+            } else {
+              setHovered(null);
+              setHoverInfo(null);
+              map.getCanvas().style.cursor = '';
+            }
+          }}
           onMouseLeave={(e) => {
             setHovered(null);
             setHoverInfo(null);

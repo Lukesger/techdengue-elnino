@@ -41,6 +41,7 @@ import {
   ANO_INICIO,
   ANO_FIM,
   MESES,
+  classificarONI,
 } from '../../application/services/el-nino-analytics/constants';
 import {
   ElNinoAlertasQueryDto,
@@ -306,26 +307,15 @@ export class ElNinoAnalyticsController {
       mesRef = `${ultimo.Mes}/${ultimo.Ano}`;
     }
 
-    const oniUlt = pacote.oni_mensal.at(-1);
+    const oniUlt = [...(pacote.oni_mensal ?? [])]
+      .sort((a, b) => a.ano - b.ano || a.mes - b.mes)
+      .at(-1);
+    const oniIntensidade = classificarONI(oniUlt?.oni);
+    const elNinoAtivo =
+      oniIntensidade.label !== 'neutro' && oniIntensidade.label !== 'la_nina';
     const elninoCorr = pacote.elnino.correlacoes.find((c) =>
       c.variavel.includes('ONI'),
     );
-    const rotuloEscopo =
-      mun?.cidade ??
-      (foco.length === 1 ? foco[0].nome : `${foco.length} municípios`);
-    // KPI de correlação: Pearson ONI[t] × casos[t] (lag 0) na base histórica
-    // completa do pacote — NÃO acompanha o filtro global de período da UI.
-    const periodoCorr = `${pacote.ano_inicio ?? ANO_INICIO}–${pacote.ano_fim ?? ANO_FIM}`;
-    const subtituloCorr = elninoCorr
-      ? [
-          'ONI (mês X) × casos (mês X)',
-          'lag 0',
-          `base ${periodoCorr}`,
-          elninoCorr.interpretacao,
-        ]
-          .filter(Boolean)
-          .join(' · ')
-      : `Sem pares suficientes · base ${periodoCorr}`;
 
     return {
       kpis: [
@@ -335,12 +325,14 @@ export class ElNinoAnalyticsController {
             atual?.temperatura_c != null
               ? `${fmtDecimal(atual.temperatura_c)} °C`
               : '—',
-          subtitulo: rotuloEscopo,
+          subtitulo:
+            mun?.cidade ??
+            (foco.length === 1 ? foco[0].nome : `${foco.length} municípios`),
         },
         {
           titulo: 'Umidade relativa',
           valor: atual?.umidade_pct != null ? `${atual.umidade_pct} %` : '—',
-          subtitulo: `${rotuloEscopo} · atual · fator de proliferação do vetor`,
+          subtitulo: 'fator de proliferação do vetor',
         },
         {
           titulo: gc ? 'Casos (último mês)' : 'Casos no escopo (último mês)',
@@ -348,10 +340,18 @@ export class ElNinoAnalyticsController {
           subtitulo: mesRef,
         },
         {
-          titulo: 'ONI / El Niño',
-          valor: oniUlt ? fmtDecimal(oniUlt.oni, 2) : '—',
+          titulo: 'El Nino Ativo',
+          valor: oniUlt ? (elNinoAtivo ? 'Sim' : 'Nao') : '—',
           subtitulo: oniUlt
-            ? `Dados de ${MESES[oniUlt.mes - 1] ?? String(oniUlt.mes).padStart(2, '0')}/${oniUlt.ano} · último ONI NOAA disponível`
+            ? [
+                `ONI ${fmtDecimal(oniUlt.oni, 2)}`,
+                `${MESES[oniUlt.mes - 1]}/${oniUlt.ano}`,
+                oniIntensidade.rotulo !== 'Neutro'
+                  ? oniIntensidade.rotulo
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
             : '',
         },
         {
@@ -359,7 +359,12 @@ export class ElNinoAnalyticsController {
           valor: elninoCorr
             ? `r = ${fmtDecimal(elninoCorr.correlacao, 3)}`
             : '—',
-          subtitulo: subtituloCorr,
+          subtitulo:
+            pacote.elnino.resumo?.variacao_casos_pct != null
+              ? `El Niño vs neutro: ${pacote.elnino.resumo.variacao_casos_pct > 0 ? '+' : ''}${fmtDecimal(
+                  pacote.elnino.resumo.variacao_casos_pct,
+                )} % casos`
+              : '',
         },
       ],
     };
