@@ -35,20 +35,15 @@ describe('cors.config', () => {
     );
   });
 
-  it('permite origem da LAN em desenvolvimento', () => {
-    const devEnv = { NODE_ENV: 'development' } as NodeJS.ProcessEnv;
-    expect(isCorsOriginAllowed('http://192.168.31.215:3001', devEnv)).toBe(
-      true,
-    );
-    expect(isCorsOriginAllowed('http://10.0.0.5:3001', devEnv)).toBe(true);
+  it('em desenvolvimento permite origem HTTP em IP privado LAN', () => {
+    const dev = { NODE_ENV: 'development' } as NodeJS.ProcessEnv;
+    expect(isCorsOriginAllowed('http://192.168.31.215:3001', dev)).toBe(true);
+    expect(isCorsOriginAllowed('http://10.0.0.8:3001', dev)).toBe(true);
   });
 
-  it('nega origem da LAN em produção sem allowlist', () => {
-    expect(
-      isCorsOriginAllowed('http://192.168.31.215:3001', {
-        NODE_ENV: 'production',
-        CORS_ORIGIN: 'https://app.example.com',
-      } as NodeJS.ProcessEnv),
-    ).toBe(false);
+  it('em produção não libera LAN só por ser IP privado', () => {
+    expect(isCorsOriginAllowed('http://192.168.31.215:3001', baseEnv)).toBe(
+      false,
+    );
   });
 });

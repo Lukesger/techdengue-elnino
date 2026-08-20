@@ -17,37 +17,30 @@ export function parseCorsOriginsFromEnv(
     .filter(Boolean);
 }
 
-function isLocalDevOrigin(origin: string): boolean {
-  return LOCAL_DEV_ORIGIN_PREFIXES.some((prefix) => origin.startsWith(prefix));
+function isPrivateLanIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map(Number);
+  if (
+    parts.length !== 4 ||
+    parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)
+  ) {
+    return false;
+  }
+  const [a, b] = parts;
+  return (
+    a === 10 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 169 && b === 254)
+  );
 }
 
-/** Permite frontend na LAN (ex.: http://192.168.x.x:3001) em desenvolvimento. */
-function isPrivateNetworkDevOrigin(origin: string): boolean {
+function isLocalDevOrigin(origin: string): boolean {
+  if (LOCAL_DEV_ORIGIN_PREFIXES.some((prefix) => origin.startsWith(prefix))) {
+    return true;
+  }
   try {
-    const { protocol, hostname } = new URL(origin);
-    if (protocol !== 'http:' && protocol !== 'https:') {
-      return false;
-    }
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '[::1]' ||
-      hostname === '::1'
-    ) {
-      return true;
-    }
-    const parts = hostname.split('.').map(Number);
-    if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
-      return false;
-    }
-    const [a, b] = parts;
-    // RFC1918 + link-local
-    return (
-      a === 10 ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      (a === 169 && b === 254)
-    );
+    const { hostname, protocol } = new URL(origin);
+    return protocol === 'http:' && isPrivateLanIpv4(hostname);
   } catch {
     return false;
   }
@@ -86,10 +79,6 @@ export function isCorsOriginAllowed(
   }
 
   if (env.NODE_ENV !== 'production' && isLocalDevOrigin(origin)) {
-    return true;
-  }
-
-  if (env.NODE_ENV !== 'production' && isPrivateNetworkDevOrigin(origin)) {
     return true;
   }
 

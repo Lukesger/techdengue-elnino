@@ -33,7 +33,11 @@ import {
 import {
   centroideGeometry,
   hoverInfoDeProps,
+  idNumericoDeProps,
   montarInsightsMapa,
+  textoElevacaoInsight,
+  textoHectaresInsightUnico,
+  textoSaltoInsight,
   type HoverInfoMapa,
 } from '@/utils/el-nino/mapa-choropleth-helpers';
 import {
@@ -899,12 +903,7 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
         dadosPoiHa,
         municipioFoiMapeado,
       }),
-    [
-      data,
-      mesNumSelecionado,
-      projecoesMap,
-      hectaresAreaMapeada,
-    ],
+    [data, mesNumSelecionado, projecoesMap, hectaresAreaMapeada],
   );
 
   const modoBairrosEfetivo = Boolean(
@@ -1090,7 +1089,6 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
     if (!map?.project) {
       return { limiteFill: '', limiteLinha: '', areas: [] as Array<{ d: string; cor: string; key: string }> };
     }
-    // cameraTick está nas deps: pan/zoom recompõe os paths SVG.
     const project: ProjetoLngLat = ([lng, lat]) => {
       const p = map.project!({ lng, lat });
       return { x: p.x, y: p.y };
@@ -1467,6 +1465,31 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
     ],
   );
 
+  const limparHoverMapa = useCallback((map: mapboxgl.Map) => {
+    setHovered(null);
+    setHoverInfo(null);
+    map.getCanvas().style.cursor = '';
+  }, []);
+
+  const aplicarHoverFeature = useCallback(
+    (
+      feat: GeoJSON.Feature | null | undefined,
+      point: { x: number; y: number },
+      map: mapboxgl.Map,
+      idKeys: string[],
+    ) => {
+      if (!feat) {
+        limparHoverMapa(map);
+        return;
+      }
+      const props = (feat.properties ?? {}) as Record<string, unknown>;
+      setHovered(idNumericoDeProps(props, idKeys));
+      setHoverInfo(hoverInfoDeProps(props, point.x, point.y));
+      map.getCanvas().style.cursor = 'pointer';
+    },
+    [limparHoverMapa],
+  );
+
   const handleMouseMove = useCallback(
     (e: MapMouseEvent) => {
       const map = e.target;
@@ -1486,40 +1509,20 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
           geojsonAtivo?.features.find(
             (f) => f.geometry && pontoEmGeometry(lng, lat, f.geometry),
           ) ?? null;
-        if (!feat) {
-          setHovered(null);
-          setHoverInfo(null);
-          map.getCanvas().style.cursor = '';
-          return;
-        }
-        const props = (feat.properties ?? {}) as Record<string, unknown>;
-        const fid = Number(props.fid ?? props.geocode);
-        setHovered(Number.isFinite(fid) ? fid : null);
-        setHoverInfo(hoverInfoDeProps(props, e.point.x, e.point.y));
-        map.getCanvas().style.cursor = 'pointer';
+        aplicarHoverFeature(feat, e.point, map, ['fid', 'geocode']);
         return;
       }
 
       const feats =
         e.features?.length ? e.features : featuresNoPonto(map, e.point);
-      const feat = feats[0];
-      if (!feat) {
-        setHovered(null);
-        setHoverInfo(null);
-        map.getCanvas().style.cursor = '';
-        return;
-      }
-      const props = feat.properties as Record<string, unknown>;
-      const fid = Number(props?.fid);
-      setHovered(Number.isFinite(fid) ? fid : null);
-      setHoverInfo(hoverInfoDeProps(props, e.point.x, e.point.y));
-      map.getCanvas().style.cursor = 'pointer';
+      aplicarHoverFeature(feats[0], e.point, map, ['fid']);
     },
     [
       modoBairrosEfetivo,
       resolverBairroNoEvento,
       usarOverlaySvg,
       geojsonAtivo,
+      aplicarHoverFeature,
     ],
   );
 
@@ -1629,12 +1632,25 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
   }
 
   const nKml = poligonosUnificadosKml ?? bairros?.length ?? 0;
-  const rotuloAreas = modoBairrosEfetivo
-    ? bairrosModo === 'areas_mapeadas'
-      ? 'áreas mapeadas'
-      : bairrosModo === 'indisponivel'
-        ? 'áreas indisponíveis'
-        : 'envoltória POIs'
+
+  const elevacaoTxt = insightsMapa.maiorElevacao
+    ? textoElevacaoInsight(
+        Boolean(insightsMapa.unicoMun),
+        insightsMapa.maiorElevacao.nome,
+        insightsMapa.maiorElevacao.delta,
+        fmt,
+      )
+    : null;
+  const saltoTxt = insightsMapa.maiorSalto
+    ? textoSaltoInsight(
+        Boolean(insightsMapa.unicoMun),
+        insightsMapa.maiorSalto.nome,
+        insightsMapa.maiorSalto.deltaMes,
+        fmt,
+      )
+    : null;
+  const unicoHaTxt = insightsMapa.unicoMun
+    ? textoHectaresInsightUnico(insightsMapa.unicoMun, fmt, fmtHa)
     : null;
 
   return (
@@ -1644,27 +1660,6 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
           <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 truncate max-w-[14rem]">
             {data.rotulo_conjunto}
           </span>
-          {mesElninoMeta?.oni != null && (
-            <span
-              className="inline-flex items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-900 tabular-nums"
-              title="Oceanic Niño Index (NOAA)"
-            >
-              ONI {fmtOni(mesElninoMeta.oni)}
-            </span>
-          )}
-          {mesElninoMeta?.fElnino != null && (
-            <span
-              className="inline-flex items-center rounded-md border border-orange-200/80 bg-orange-50 px-2 py-1 text-[11px] font-medium text-orange-900 tabular-nums"
-              title="Fator multiplicador do El Niño na projeção"
-            >
-              fator {fmtFator(mesElninoMeta.fElnino)}
-            </span>
-          )}
-          {modoBairrosEfetivo && (
-            <span className="inline-flex items-center rounded-md border border-[#0087a8]/20 bg-[#0087a8]/[0.07] px-2 py-1 text-[11px] font-medium text-[#006d8a]">
-              {bairros?.length ?? 0} {rotuloAreas}
-            </span>
-          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
@@ -1703,7 +1698,7 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
 
       <div className="mx-3 sm:mx-4 mt-2.5 rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white px-3 py-2.5">
         <div className="flex flex-wrap items-stretch gap-2">
-          {insightsMapa.maiorElevacao && (
+          {elevacaoTxt && insightsMapa.maiorElevacao && (
             <button
               type="button"
               onClick={() => {
@@ -1713,22 +1708,18 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
               className="min-w-[9.5rem] flex-1 sm:flex-none inline-flex flex-col justify-center gap-0.5 rounded-lg border border-orange-200/90 bg-orange-50/80 px-2.5 py-2 text-left hover:bg-orange-50 transition-colors"
             >
               <span className="text-[10px] uppercase tracking-[0.04em] font-semibold text-orange-700/80">
-                {insightsMapa.unicoMun ? 'Efeito El Niño' : 'Elevação El Niño'}
+                {elevacaoTxt.titulo}
               </span>
               <span className="text-sm font-bold text-orange-950 tabular-nums leading-tight">
-                {insightsMapa.unicoMun
-                  ? `+${fmt(insightsMapa.maiorElevacao.delta)} casos`
-                  : `${insightsMapa.maiorElevacao.nome}: +${fmt(insightsMapa.maiorElevacao.delta)}`}
+                {elevacaoTxt.valor}
               </span>
               <span className="text-[10px] text-orange-800/75 leading-snug">
-                {insightsMapa.unicoMun
-                  ? 'a mais neste mês por causa do El Niño'
-                  : 'vs. cenário sem El Niño'}
+                {elevacaoTxt.detalhe}
               </span>
             </button>
           )}
 
-          {insightsMapa.maiorSalto && (
+          {saltoTxt && insightsMapa.maiorSalto && (
             <button
               type="button"
               onClick={() => {
@@ -1738,24 +1729,18 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
               className="min-w-[9.5rem] flex-1 sm:flex-none inline-flex flex-col justify-center gap-0.5 rounded-lg border border-sky-200/90 bg-sky-50/80 px-2.5 py-2 text-left hover:bg-sky-50 transition-colors"
             >
               <span className="text-[10px] uppercase tracking-[0.04em] font-semibold text-sky-700/80">
-                {insightsMapa.unicoMun ? 'Vs. mês anterior' : 'Maior salto'}
+                {saltoTxt.titulo}
               </span>
               <span className="text-sm font-bold text-sky-950 tabular-nums leading-tight">
-                {insightsMapa.unicoMun
-                  ? `${insightsMapa.maiorSalto.deltaMes > 0 ? '+' : ''}${fmt(insightsMapa.maiorSalto.deltaMes)} casos`
-                  : `${insightsMapa.maiorSalto.nome}: ${insightsMapa.maiorSalto.deltaMes > 0 ? '+' : ''}${fmt(insightsMapa.maiorSalto.deltaMes)}`}
+                {saltoTxt.valor}
               </span>
               <span className="text-[10px] text-sky-800/75 leading-snug">
-                {insightsMapa.unicoMun
-                  ? insightsMapa.maiorSalto.deltaMes > 0
-                    ? 'acima do mês passado'
-                    : 'abaixo do mês passado'
-                  : 'vs. mês anterior'}
+                {saltoTxt.detalhe}
               </span>
             </button>
           )}
 
-          {insightsMapa.unicoMun ? (
+          {insightsMapa.unicoMun && unicoHaTxt ? (
             <button
               type="button"
               onClick={() => {
@@ -1773,24 +1758,7 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
                   : 'El Niño quase neutro'}
               </span>
               <span className="text-[10px] text-slate-600 leading-snug">
-                {fmt(insightsMapa.unicoMun.projetado)} casos
-                {insightsMapa.unicoMun.deltaElnino > 0
-                  ? ` (seriam ${fmt(insightsMapa.unicoMun.baseSemElnino)} sem EN)`
-                  : ''}
-                {insightsMapa.unicoMun.mapeado &&
-                insightsMapa.unicoMun.hectares != null &&
-                insightsMapa.unicoMun.hectares > 0
-                  ? insightsMapa.unicoMun.hectaresFonte === 'unificado' &&
-                    insightsMapa.unicoMun.hectaresBruto != null &&
-                    Math.abs(
-                      insightsMapa.unicoMun.hectaresBruto -
-                        insightsMapa.unicoMun.hectares,
-                    ) >= 0.01
-                    ? ` · unif. ${fmtHa(insightsMapa.unicoMun.hectares)} · bruto ${fmtHa(insightsMapa.unicoMun.hectaresBruto)}`
-                    : ` · ${fmtHa(insightsMapa.unicoMun.hectares)} mapeados`
-                  : insightsMapa.unicoMun.mapeado
-                    ? ' · mapeado TD'
-                    : ' · sem mapeamento TD'}
+                {unicoHaTxt}
               </span>
             </button>
           ) : (
@@ -1875,9 +1843,7 @@ export const ElNinoMapaChoropleth: React.FC<Props> = ({
           onClick={handleClick}
           onMouseMove={handleMouseMove}
           onMouseLeave={(e) => {
-            setHovered(null);
-            setHoverInfo(null);
-            e.target.getCanvas().style.cursor = '';
+            limparHoverMapa(e.target);
           }}
           interactiveLayerIds={usarOverlaySvg ? [] : CAMADAS_INTERATIVAS}
         >

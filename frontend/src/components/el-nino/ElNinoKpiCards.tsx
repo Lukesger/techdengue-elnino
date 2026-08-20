@@ -36,22 +36,38 @@ const TEMAS: Record<string, TemaKpi> = {
     accent: 'text-orange-700',
     iconBg: 'bg-orange-50',
     iconFg: 'text-orange-600',
-    bar: 'bg-gradient-to-b from-orange-400 to-rose-500',
+    bar: 'bg-gradient-to-b from-orange-400 to-amber-600',
     ring: 'hover:border-orange-200',
   },
   umidade: {
-    accent: 'text-sky-700',
-    iconBg: 'bg-sky-50',
-    iconFg: 'text-sky-600',
-    bar: 'bg-gradient-to-b from-sky-400 to-cyan-600',
-    ring: 'hover:border-sky-200',
+    accent: 'text-teal-700',
+    iconBg: 'bg-teal-50',
+    iconFg: 'text-teal-600',
+    bar: 'bg-gradient-to-b from-teal-400 to-emerald-600',
+    ring: 'hover:border-teal-200',
   },
-  casos: {
+  /** Média histórica — leitura analítica, não alarme. */
+  casosMedios: {
+    accent: 'text-violet-700',
+    iconBg: 'bg-violet-50',
+    iconFg: 'text-violet-600',
+    bar: 'bg-gradient-to-b from-violet-400 to-indigo-600',
+    ring: 'hover:border-violet-200',
+  },
+  /** Incidência do último mês — único vermelho (ação). */
+  casosRecentes: {
     accent: 'text-rose-700',
     iconBg: 'bg-rose-50',
     iconFg: 'text-rose-600',
     bar: 'bg-gradient-to-b from-rose-400 to-red-600',
     ring: 'hover:border-rose-200',
+  },
+  chuva: {
+    accent: 'text-sky-700',
+    iconBg: 'bg-sky-50',
+    iconFg: 'text-sky-600',
+    bar: 'bg-gradient-to-b from-sky-400 to-blue-600',
+    ring: 'hover:border-sky-200',
   },
   oni: {
     accent: 'text-amber-800',
@@ -78,8 +94,10 @@ function chaveTema(titulo: string): keyof typeof TEMAS | 'default' {
   const t = titulo.toLowerCase();
   if (t.includes('temp')) return 'temp';
   if (t.includes('umidade')) return 'umidade';
+  if (t.includes('chuva') || t.includes('precip')) return 'chuva';
   if (ehCorrelacao(titulo)) return 'correlacao';
-  if (t.includes('caso')) return 'casos';
+  if (t.includes('medio') || t.includes('médio')) return 'casosMedios';
+  if (t.includes('caso')) return 'casosRecentes';
   if (t.includes('oni') || t.includes('el nino') || t.includes('el niño'))
     return 'oni';
   return 'default';

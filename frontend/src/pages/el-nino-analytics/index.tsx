@@ -49,6 +49,13 @@ import {
 } from '@/utils/el-nino/graficos-filtros';
 import { montarDadosGraficosElNino } from '@/utils/el-nino/montar-dados-graficos';
 import { preferirSerieConsorcioRemontada } from '@/utils/el-nino/montar-serie-consorcio';
+import {
+  agruparContratosParaTemp,
+  aplicarTempGrupoNoKpi,
+  escolherAmostrasUrs,
+  geocodesDasAmostrasUrs,
+  mediasTempTodasUrs,
+} from '@/utils/el-nino/temperatura-urs';
 
 /** Resolve contrato do filtro: consórcio explícito ou dono do geocode (VD/consórcio). */
 function resolverContratoEfetivo(
@@ -336,6 +343,7 @@ export default function ElNinoAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingSecundario, setLoadingSecundario] = useState(false);
   const [loadingClima, setLoadingClima] = useState(false);
+  const [tempGrupoIndex, setTempGrupoIndex] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
   const [state, setState] = useState<PageState>(INITIAL_STATE);
   /** Invalida respostas de load antigo ao trocar de contrato/município. */
@@ -441,6 +449,41 @@ export default function ElNinoAnalyticsPage() {
   const carrosselKpisAtivo =
     !modoVisaoGerencialTodos && municipiosCarrossel.length > 1;
 
+  const overlayTempConsorcio =
+    geocodeFiltroMapa == null &&
+    filtros.geocode == null &&
+    (modoVisaoGerencialTodos || filtros.consorcioId != null);
+
+  const amostrasTempConsorcio = useMemo(() => {
+    if (!overlayTempConsorcio) return [];
+    const grupos = agruparContratosParaTemp(state.consorcios, {
+      contratoId: modoVisaoGerencialTodos ? null : filtros.consorcioId,
+    });
+    const geocodesPermitidos = (
+      state.overview?.municipios ??
+      state.escopo?.municipios ??
+      []
+    )
+      .map((m: { geocode?: number }) => Number(m.geocode))
+      .filter((g: number) => Number.isFinite(g) && g > 0);
+    return escolherAmostrasUrs(grupos, {
+      geocodesPermitidos: geocodesPermitidos.length ? geocodesPermitidos : null,
+      municipiosComCoords: state.overview?.municipios ?? [],
+    });
+  }, [
+    overlayTempConsorcio,
+    modoVisaoGerencialTodos,
+    filtros.consorcioId,
+    state.consorcios,
+    state.overview?.municipios,
+    state.escopo?.municipios,
+  ]);
+
+  const tempsConsorcioLive = useMemo(
+    () => mediasTempTodasUrs(amostrasTempConsorcio, state.climaPorMunicipio),
+    [amostrasTempConsorcio, state.climaPorMunicipio],
+  );
+
   /** KPIs efetivos exibidos: específicos do município ativo ou agregado. */
   const kpisExibidos = useMemo<ElNinoKpisResponse | null>(() => {
     const base =
@@ -472,8 +515,20 @@ export default function ElNinoAnalyticsPage() {
     const kpis = listaBase.map((k) => ({ ...k }));
     let mudou = false;
 
+    const tempGrupo =
+      overlayTempConsorcio && tempsConsorcioLive.length
+        ? tempsConsorcioLive[
+            tempGrupoIndex % tempsConsorcioLive.length
+          ]
+        : null;
+    if (tempGrupo) {
+      const next = aplicarTempGrupoNoKpi(kpis, tempGrupo);
+      kpis.splice(0, kpis.length, ...next);
+      mudou = true;
+    }
+
     const temp = clima?.atual?.temperatura_c;
-    if (temp != null && temp > 0) {
+    if (!tempGrupo && temp != null && temp > 0) {
       const idx = kpis.findIndex((k) => /temperatura/i.test(k.titulo));
       if (idx >= 0) {
         kpis[idx] = {
@@ -528,6 +583,9 @@ export default function ElNinoAnalyticsPage() {
     state.kpis,
     state.climaPorMunicipio,
     municipiosCarrossel,
+    overlayTempConsorcio,
+    tempsConsorcioLive,
+    tempGrupoIndex,
   ]);
 
   const geocodeClima = filtros.geocode ?? geocodeFiltroMapa;
@@ -1114,7 +1172,7 @@ export default function ElNinoAnalyticsPage() {
       setLoading(false);
 
       // KPIs assim que chegarem (não esperam o mapa pesado).
-      void kpisP
+      kpisP
         .then((kpis) => {
           if (!aindaValido()) return;
           const geocodeKpi =
@@ -1254,6 +1312,70 @@ export default function ElNinoAnalyticsPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.escopo, cargaKey, carrosselKpisAtivo, state.overview?.atualizado_em]);
+
+  /** Clima amostrado por consórcio (visão gerencial / contrato sem município). */
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated) return;
+    if (!overlayTempConsorcio) return;
+    const geocodes = geocodesDasAmostrasUrs(amostrasTempConsorcio).filter(
+      (gc) => !state.climaPorMunicipio[gc],
+    );
+    if (!geocodes.length) return;
+
+    let cancelado = false;
+    (async () => {
+      const resultados = await Promise.allSettled(
+        geocodes.map((gc) =>
+          elNinoApi.getClima({
+            geocode: gc,
+            ano: 'previsao',
+            ...(modoVisaoGerencialTodos
+              ? { visao: 'todos' as const }
+              : contratoEfetivo != null
+                ? { contratoId: contratoEfetivo }
+                : {}),
+          }),
+        ),
+      );
+      if (cancelado) return;
+      const mapa: Record<number, ClimaForecast> = {};
+      resultados.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value) {
+          mapa[geocodes[i]] = r.value;
+        }
+      });
+      if (!Object.keys(mapa).length) return;
+      setState((s) => ({
+        ...s,
+        climaPorMunicipio: { ...s.climaPorMunicipio, ...mapa },
+      }));
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isHydrated,
+    isAuthenticated,
+    overlayTempConsorcio,
+    amostrasTempConsorcio,
+    modoVisaoGerencialTodos,
+    contratoEfetivo,
+    cargaKey,
+  ]);
+
+  useEffect(() => {
+    setTempGrupoIndex(0);
+  }, [amostrasTempConsorcio]);
+
+  useEffect(() => {
+    if (!overlayTempConsorcio || tempsConsorcioLive.length <= 1) return;
+    const id = setInterval(() => {
+      setTempGrupoIndex((i) => i + 1);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [overlayTempConsorcio, tempsConsorcioLive.length]);
 
   /** Inicia o carrossel no 1º município do escopo (sem alterar o filtro do mapa). */
   useEffect(() => {
