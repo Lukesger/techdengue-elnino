@@ -159,6 +159,14 @@ export function mediaTemperaturaUltimoMesMensal(
   return { valor: media, n: temps.length, mes, ano };
 }
 
+function kpiCard(
+  titulo: string,
+  valor: string,
+  subtitulo: string,
+): { titulo: string; valor: string; subtitulo: string } {
+  return { titulo, valor, subtitulo };
+}
+
 function resolverTemperaturaKpi(
   dados: any,
   geocode: number | undefined,
@@ -170,11 +178,11 @@ function resolverTemperaturaKpi(
     const clima = climaMunicipio(dados, geocode);
     const tAtual = temperaturaValida(clima?.atual?.temperatura_c);
     if (tAtual != null) {
-      return {
-        titulo: 'Temperatura atual',
-        valor: `${tAtual} °C`,
-        subtitulo: munNome ? `${munNome} · clima atual` : 'Clima atual',
-      };
+      return kpiCard(
+        'Temperatura atual',
+        `${tAtual} °C`,
+        munNome ? `${munNome} · clima atual` : 'Clima atual',
+      );
     }
 
     const ultimoDia = clima?.dias?.at(-1);
@@ -183,38 +191,31 @@ function resolverTemperaturaKpi(
     );
     if (tDia != null) {
       const ref = ultimoDia?.periodo || ultimoDia?.data || '';
-      return {
-        titulo: 'Temperatura atual',
-        valor: `${tDia} °C`,
-        subtitulo: ref
-          ? `${ref}${munNome ? ` · ${munNome}` : ''}`
-          : munNome ?? 'Último registro climático',
-      };
+      const sub = ref
+        ? `${ref}${munNome ? ` · ${munNome}` : ''}`
+        : munNome ?? 'Último registro climático';
+      return kpiCard('Temperatura atual', `${tDia} °C`, sub);
     }
   } else {
     const mediaClima = mediaTemperaturaClimaMunicipios(dados);
     if (mediaClima) {
-      return {
-        titulo: 'Temperatura atual',
-        valor: `${mediaClima.valor} °C`,
-        subtitulo: `Média de ${mediaClima.n} municípios · clima atual`,
-      };
+      return kpiCard(
+        'Temperatura atual',
+        `${mediaClima.valor} °C`,
+        `Média de ${mediaClima.n} municípios · clima atual`,
+      );
     }
     const mediaMes = mediaTemperaturaUltimoMesMensal(
       dados.df_mensal_mun?.length ? dados.df_mensal_mun : serieHist,
     );
     if (mediaMes) {
-      return {
-        titulo: 'Temperatura média',
-        valor: `${mediaMes.valor} °C`,
-        subtitulo: `Média MG · ${mediaMes.mes}/${mediaMes.ano}`,
-      };
+      return kpiCard(
+        'Temperatura média',
+        `${mediaMes.valor} °C`,
+        `Média MG · ${mediaMes.mes}/${mediaMes.ano}`,
+      );
     }
-    return {
-      titulo: 'Temperatura média',
-      valor: 'N/A',
-      subtitulo: 'Último mês registrado',
-    };
+    return kpiCard('Temperatura média', 'N/A', 'Último mês registrado');
   }
 
   const ultimoComTemp = [...serieHist]
@@ -224,106 +225,66 @@ function resolverTemperaturaKpi(
 
   if (ultimoComTemp) {
     const t = temperaturaValida(ultimoComTemp.Temperatura)!;
-    const periodo =
-      ultimoComTemp.Mes && ultimoComTemp.Ano
-        ? `${ultimoComTemp.Mes}/${ultimoComTemp.Ano}`
-        : '';
+    const temPeriodo =
+      typeof ultimoComTemp.Mes === 'string' &&
+      ultimoComTemp.Mes.trim() !== '' &&
+      ultimoComTemp.Ano != null;
+    const periodo = temPeriodo
+      ? `${ultimoComTemp.Mes}/${ultimoComTemp.Ano}`
+      : '';
+    const sub = periodo
+      ? `${periodo}${munNome ? ` · ${munNome}` : ''}`
+      : munNome ?? 'Último mês registrado';
+    return kpiCard('Temperatura média', `${t} °C`, sub);
+  }
+
+  return kpiCard(
+    'Temperatura média',
+    'N/A',
+    munNome ?? 'Último mês registrado',
+  );
+}
+
+/**
+ * Front não monta a estrutura do KPI El Niño — só devolve o card
+ * já estruturado pelo backend (`dados.kpis`) ou os campos prontos em `elnino`.
+ */
+function kpiElNinoDoBackend(dados: any): {
+  titulo: string;
+  valor: string;
+  subtitulo: string;
+} {
+  const lista = Array.isArray(dados?.kpis) ? dados.kpis : null;
+  const pronto = lista?.find(
+    (k: { titulo?: string }) =>
+      typeof k?.titulo === 'string' && /el\s*nino\s*ativo/i.test(k.titulo),
+  );
+  if (pronto) {
     return {
-      titulo: 'Temperatura média',
-      valor: `${t} °C`,
-      subtitulo: periodo
-        ? `${periodo}${munNome ? ` · ${munNome}` : ''}`
-        : munNome ?? 'Último mês registrado',
+      titulo: String(pronto.titulo),
+      valor: String(pronto.valor ?? '—'),
+      subtitulo: String(pronto.subtitulo ?? ''),
     };
   }
 
-  return {
-    titulo: 'Temperatura média',
-    valor: 'N/A',
-    subtitulo: munNome ?? 'Último mês registrado',
-  };
-}
-
-function rotuloPeriodoOni(periodo: unknown, fallback?: { mes?: number; ano?: number }): string {
-  if (periodo != null && String(periodo).trim()) {
-    const [anoStr, mesStr] = String(periodo).split('/');
-    const mesNum = Number(mesStr);
-    const anoNum = Number(anoStr);
-    if (Number.isFinite(mesNum) && mesNum >= 1 && mesNum <= 12) {
-      return `${MESES_LABEL[mesNum - 1]}/${anoNum || anoStr}`;
+  const el = dados?.elnino;
+  if (el && typeof el === 'object') {
+    const partes: string[] = [];
+    if (el.oni_atual != null && Number.isFinite(Number(el.oni_atual))) {
+      partes.push(`ONI ${Number(el.oni_atual).toFixed(2)}`);
     }
-    return String(periodo);
-  }
-  if (
-    fallback?.mes != null &&
-    fallback.mes >= 1 &&
-    fallback.mes <= 12 &&
-    fallback.ano != null
-  ) {
-    return `${MESES_LABEL[fallback.mes - 1]}/${fallback.ano}`;
-  }
-  return '';
-}
-
-function montarKpiElNino(dados: any) {
-  const el = dados.elnino;
-  const oni = dados.oni_mensal || [];
-  const ultimoOni = oni.length
-    ? [...oni].sort((a: any, b: any) => a.ano - b.ano || a.mes - b.mes).at(-1)
-    : null;
-
-  const periodo = el?.periodo_atual;
-  let mesPeriodo: number | undefined;
-  let anoPeriodo: number | undefined;
-  if (periodo != null && String(periodo).includes('/')) {
-    const [anoStr, mesStr] = String(periodo).split('/');
-    const mesNum = Number(mesStr);
-    const anoNum = Number(anoStr);
-    if (Number.isFinite(mesNum) && mesNum >= 1 && mesNum <= 12) {
-      mesPeriodo = mesNum;
-      anoPeriodo = Number.isFinite(anoNum) ? anoNum : undefined;
+    if (el.periodo_atual) partes.push(String(el.periodo_atual));
+    if (el.intensidade && el.intensidade !== 'Neutro') {
+      partes.push(String(el.intensidade));
     }
+    return {
+      titulo: 'El Nino Ativo',
+      valor: el.ativo ? 'Sim' : 'Nao',
+      subtitulo: partes.join(' · '),
+    };
   }
 
-  const pontoLive =
-    el?.oni_atual != null && Number.isFinite(Number(el.oni_atual))
-      ? {
-          oni: Number(el.oni_atual),
-          periodo,
-          mes: mesPeriodo ?? ultimoOni?.mes,
-          ano: anoPeriodo ?? ultimoOni?.ano,
-        }
-      : ultimoOni
-        ? {
-            oni: Number(ultimoOni.oni),
-            periodo: null,
-            mes: ultimoOni.mes,
-            ano: ultimoOni.ano,
-          }
-        : null;
-
-  const oniValor = pontoLive?.oni ?? null;
-
-  const ativo =
-    oniValor != null ? oniValor >= 0.5 : Boolean(el?.ativo);
-
-  const mesRef = rotuloPeriodoOni(pontoLive?.periodo ?? el?.periodo_atual, {
-    mes: pontoLive?.mes,
-    ano: pontoLive?.ano,
-  });
-
-  const subtituloParts: string[] = [];
-  if (oniValor != null) subtituloParts.push(`ONI ${oniValor.toFixed(2)}`);
-  if (mesRef) subtituloParts.push(mesRef);
-  if (el?.intensidade && el.intensidade !== 'Neutro') {
-    subtituloParts.push(el.intensidade);
-  }
-
-  return {
-    titulo: 'El Nino Ativo',
-    valor: ativo ? 'Sim' : 'Nao',
-    subtitulo: subtituloParts.join(' · '),
-  };
+  return { titulo: 'El Nino Ativo', valor: '—', subtitulo: '' };
 }
 
 export type CasosUltimoMesLiveKpi = {
@@ -351,6 +312,29 @@ function liveUltimoMesValido(
     mes >= 1 &&
     mes <= 12 &&
     Number.isFinite(Number(o.casos))
+  );
+}
+
+function subtituloUltimoMesCasos(
+  liveUltimoMes: CasosUltimoMesLiveKpi | undefined,
+  ultimoSerie: any | undefined,
+): string {
+  if (liveUltimoMes) return rotuloCasosUltimoMesLive(liveUltimoMes);
+  if (ultimoSerie) return `${ultimoSerie.Mes}/${ultimoSerie.Ano}`;
+  return '';
+}
+
+function valorUltimoMesCasos(
+  liveUltimoMes: CasosUltimoMesLiveKpi | undefined,
+  ultimoSerie: any | undefined,
+  geocode?: number,
+): string {
+  if (liveUltimoMes) return String(liveUltimoMes.casos);
+  if (!ultimoSerie) return 'N/A';
+  return String(
+    geocode
+      ? casosConfirmadosDeLinha(ultimoSerie)
+      : ultimoSerie.CasosDengue,
   );
 }
 
@@ -391,7 +375,9 @@ export function montarKpis(
   const chuvaProj = projetarPrecipitacaoProximoMes(dados, geocode);
   const serieParaTemp = mensalMun.length
     ? mensalMun
-    : (dados.df_mensal_mun?.length ? dados.df_mensal_mun : serieAgregada);
+    : dados.df_mensal_mun?.length
+      ? dados.df_mensal_mun
+      : serieAgregada;
   const tempKpi = resolverTemperaturaKpi(dados, geocode, serieParaTemp);
 
   return [
@@ -407,22 +393,10 @@ export function montarKpis(
     },
     {
       titulo: 'Ultimo Mes Casos',
-      valor: liveUltimoMes
-        ? String(liveUltimoMes.casos)
-        : ultimoSerie
-          ? String(
-              geocode
-                ? casosConfirmadosDeLinha(ultimoSerie)
-                : ultimoSerie.CasosDengue,
-            )
-          : 'N/A',
-      subtitulo: liveUltimoMes
-        ? rotuloCasosUltimoMesLive(liveUltimoMes)
-        : ultimoSerie
-          ? `${ultimoSerie.Mes}/${ultimoSerie.Ano}`
-          : '',
+      valor: valorUltimoMesCasos(liveUltimoMes, ultimoSerie, geocode),
+      subtitulo: subtituloUltimoMesCasos(liveUltimoMes, ultimoSerie),
     },
-    montarKpiElNino(dados),
+    kpiElNinoDoBackend(dados),
     {
       titulo: 'Precipitacao de Chuva',
       valor: chuvaProj.valor,

@@ -40,9 +40,8 @@ import {
   MunicipioFoco,
   ANO_INICIO,
   ANO_FIM,
-  MESES,
-  classificarONI,
 } from '../../application/services/el-nino-analytics/constants';
+import { montarKpiElNinoAtivo } from './montar-kpi-el-nino-ativo';
 import {
   ElNinoAlertasQueryDto,
   ElNinoCasosPorBairroQueryDto,
@@ -307,15 +306,16 @@ export class ElNinoAnalyticsController {
       mesRef = `${ultimo.Mes}/${ultimo.Ano}`;
     }
 
-    const oniUlt = [...(pacote.oni_mensal ?? [])]
-      .sort((a, b) => a.ano - b.ano || a.mes - b.mes)
-      .at(-1);
-    const oniIntensidade = classificarONI(oniUlt?.oni);
-    const elNinoAtivo =
-      oniIntensidade.label !== 'neutro' && oniIntensidade.label !== 'la_nina';
+    const kpiElNino = montarKpiElNinoAtivo(pacote.oni_mensal);
     const elninoCorr = pacote.elnino.correlacoes.find((c) =>
       c.variavel.includes('ONI'),
     );
+    const variacaoCasos = pacote.elnino.resumo?.variacao_casos_pct;
+    let subtituloCorrelacao = '';
+    if (variacaoCasos != null) {
+      const sinal = variacaoCasos > 0 ? '+' : '';
+      subtituloCorrelacao = `El Niño vs neutro: ${sinal}${fmtDecimal(variacaoCasos)} % casos`;
+    }
 
     return {
       kpis: [
@@ -339,32 +339,13 @@ export class ElNinoAnalyticsController {
           valor: casosTxt,
           subtitulo: mesRef,
         },
-        {
-          titulo: 'El Nino Ativo',
-          valor: oniUlt ? (elNinoAtivo ? 'Sim' : 'Nao') : '—',
-          subtitulo: oniUlt
-            ? [
-                `ONI ${fmtDecimal(oniUlt.oni, 2)}`,
-                `${MESES[oniUlt.mes - 1]}/${oniUlt.ano}`,
-                oniIntensidade.rotulo !== 'Neutro'
-                  ? oniIntensidade.rotulo
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            : '',
-        },
+        kpiElNino,
         {
           titulo: 'Correlação ONI × casos',
           valor: elninoCorr
             ? `r = ${fmtDecimal(elninoCorr.correlacao, 3)}`
             : '—',
-          subtitulo:
-            pacote.elnino.resumo?.variacao_casos_pct != null
-              ? `El Niño vs neutro: ${pacote.elnino.resumo.variacao_casos_pct > 0 ? '+' : ''}${fmtDecimal(
-                  pacote.elnino.resumo.variacao_casos_pct,
-                )} % casos`
-              : '',
+          subtitulo: subtituloCorrelacao,
         },
       ],
     };
